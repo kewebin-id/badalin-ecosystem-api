@@ -1,0 +1,14 @@
+node_modules
+dist
+package-lock.json
+yarn.lock
+.vscode
+
+# Keep environment variables out of version control
+.env
+
+src/shared/database/prisma/generated/prisma
+generated/prisma
+
+# Docs
+*CURL.md

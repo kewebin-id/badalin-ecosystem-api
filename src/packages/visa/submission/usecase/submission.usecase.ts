@@ -1,0 +1,72 @@
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { VerifyStatus } from '@prisma/client';
+import { VisaSubmissionEntity } from '../domain/submission.entity';
+import { SubmitVisaDto } from '../dto/submission.dto';
+import { IVisaSubmissionRepository, IVisaSubmissionUseCase } from '../ports';
+
+@Injectable()
+export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
+  constructor(
+    @Inject('IVisaSubmissionRepository')
+    private readonly repository: IVisaSubmissionRepository,
+  ) {}
+
+  async create(dto: SubmitVisaDto, requesterId: string, leaderId: string): Promise<{ data: VisaSubmissionEntity }> {
+    const agency = await this.repository.findAgencyBySlug(dto.agencySlug);
+    if (!agency) {
+      throw new NotFoundException('Agency not found');
+    }
+
+    const pilgrims = await this.repository.findPilgrimsByIds(dto.pilgrimIds);
+    if (pilgrims.length !== dto.pilgrimIds.length) {
+      throw new BadRequestException('Some pilgrims not found');
+    }
+
+    for (const pilgrim of pilgrims) {
+      if (!pilgrim.isComplete) {
+        throw new BadRequestException(`Pilgrim data is incomplete for ${pilgrim.fullName}`);
+      }
+    }
+
+    const flightEta = new Date(dto.flightEta).toISOString();
+    const flightEtd = new Date(dto.flightEtd).toISOString();
+    const hotelCheckin = new Date(dto.hotelCheckin).toISOString();
+    const hotelCheckout = new Date(dto.hotelCheckout).toISOString();
+
+    if (hotelCheckin !== flightEta || hotelCheckout !== flightEtd) {
+      throw new BadRequestException('Zero Gap Sync Error. Hotel dates must match flight times.');
+    }
+
+    if (dto.transportType === 'Avanza/MPV' && dto.tripRoute === 'Bandara-Hotel' && pilgrims.length >= 6) {
+      throw new BadRequestException(
+        'Smart Transport limit: Avanza/MPV only supports up to 5 passengers for Airport-Hotel route.',
+      );
+    }
+
+    const totalAmount = Number(agency.visaPrice) * pilgrims.length;
+
+    const submission = await this.repository.create(
+      {
+        leaderId,
+        agencySlug: dto.agencySlug,
+        totalAmount,
+        resultSnapshot: JSON.parse(JSON.stringify(pilgrims)),
+        createdBy: requesterId,
+        status: VerifyStatus.IN_REVIEW,
+        flightEta: new Date(dto.flightEta),
+        flightEtd: new Date(dto.flightEtd),
+        hotelCheckin: new Date(dto.hotelCheckin),
+        hotelCheckout: new Date(dto.hotelCheckout),
+        transportType: dto.transportType,
+        tripRoute: dto.tripRoute,
+      },
+      dto.pilgrimIds,
+    );
+
+    return { data: submission };
+  }
+
+  async getSubmission(id: string): Promise<VisaSubmissionEntity | null> {
+    return this.repository.findById(id);
+  }
+}
