@@ -1,98 +1,105 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Badalin Ecosystem API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust and scalable backend system for the Badalin Ecosystem, built with NestJS, Prisma, and PostgreSQL. The project follows Hexagonal Architecture principles to ensure maintainability and testability.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Key Features
 
-## Description
+- **Visa Submission Management**: Complete workflow for handling visa applications.
+- **Pilgrim Management**: Secure storage and retrieval of pilgrim data.
+- **Auth System**: JWT-based authentication with role-based access control.
+- **Agency Integration**: Multi-tenant support with agency-specific logic and unique slugs.
+- **Hexagonal Architecture**: Clear separation of concerns between Ports, Adapters, and UseCases.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠 Prerequisites
 
-## Project setup
+Ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [PostgreSQL](https://www.postgresql.org/) database
+
+## 🏗 Architecture Documentation
+
+This project adheres to **Hexagonal Architecture** (also known as Ports and Adapters):
+
+### Folder Structure
+- `src/packages`: Contains business domains (Auth, Pilgrim, Submission, etc.).
+  - `domain`: Entity definitions.
+  - `ports`: Interfaces for UseCases and Repositories.
+  - `usecase`: Business logic implementations.
+  - `repository`: Data access implementations (Adapters).
+  - `controller`: Web interface implementations.
+- `src/shared`: Reusable modules such as database utilities, common guards, middleware, and interceptors.
+
+### Naming Conventions
+- **Application Layer**: Uses `camelCase` for all fields and variables.
+- **Database Layer**: Uses `snake_case` for all table and column names (mapped via Prisma `@map` and `@@map`).
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in the root directory and configure the following:
+
+```env
+PORT=3004
+MODE=API # API, SCHEDULER, or WORKER
+NODE_ENV=development
+
+# Database Configuration
+DATABASE_URL="postgresql://user:password@localhost:5432/db_name"
+
+# Security
+JWT_SECRET="your-super-secret-key"
+INTERNAL_API_KEY="your-internal-api-key"
+
+# Defaults
+DEFAULT_AGENCY=badalin
+```
+
+## 🛠 Getting Started
+
+### 1. Installation
 
 ```bash
 $ npm install
 ```
 
-## Compile and run the project
+### 2. Database Setup
+
+Generate the Prisma Client and run migrations:
 
 ```bash
-# development
-$ npm run start
+$ npx prisma generate --schema=src/shared/database/prisma/schema.prisma
+$ npx prisma migrate dev --schema=src/shared/database/prisma/schema.prisma
+```
 
-# watch mode
-$ npm run start:dev
+(Optional) Seed initial data:
+```bash
+$ npm run prisma:seed
+```
 
-# production mode
+### 3. Running the Project
+
+```bash
+# Development mode
+$ npm run dev
+
+# Production mode
+$ npm run build
 $ npm run start:prod
 ```
 
-## Run tests
+## 🧪 Testing
 
 ```bash
-# unit tests
+# Run unit tests
 $ npm run test
 
-# e2e tests
+# Run e2e tests
 $ npm run test:e2e
 
-# test coverage
+# Test coverage
 $ npm run test:cov
 ```
 
-## Deployment
+## 📜 License
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is [UNLICENSED](LICENSE).
