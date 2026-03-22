@@ -31,8 +31,7 @@ export class PrismaAuthRepository implements IAuthRepository {
         agencySlug: agencySlug || null,
         role: UserRole.PILGRIM,
       };
-      return await this.db.user.create({ data: data as any });
-
+      return await this.db.user.create({ data });
     } catch (error) {
       Logger.error('Error in create user:', error);
       throw error;
@@ -77,5 +76,4 @@ export class PrismaAuthRepository implements IAuthRepository {
       throw error;
     }
   };
-
 }
