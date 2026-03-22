@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 
 class GlobalLogger {
-  private logger = new Logger('CarOrderingSystem');
+  private logger = new Logger('BadalinAPI');
 
   info = (message: string, context?: string) => {
     this.logger.log(message, context);
