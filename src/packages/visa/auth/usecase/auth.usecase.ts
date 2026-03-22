@@ -84,6 +84,7 @@ export class AuthUseCase implements IAuthUseCase {
         id: string;
         email: string;
         phoneNumber: string;
+        role: string;
         agency: {
           name: string;
           slug: string;
@@ -115,6 +116,7 @@ export class AuthUseCase implements IAuthUseCase {
             id: user.id,
             email: user.email || '',
             phoneNumber: user.phoneNumber || '',
+            role: user.role,
             agency: user.agency
               ? {
                   name: user.agency.name,

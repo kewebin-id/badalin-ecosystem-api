@@ -23,6 +23,15 @@ export class PrismaAuthRepository implements IAuthRepository {
 
   create = async (dto: RegisterDto, agencySlug?: string): Promise<User> => {
     try {
+      if (agencySlug) {
+        const agency = await this.db.agency.findUnique({
+          where: { slug: agencySlug },
+        });
+        if (!agency) {
+          throw new Error('Agency not found');
+        }
+      }
+
       const isEmail = dto.identifier.includes('@');
       const data = {
         email: isEmail ? dto.identifier : dto.email || null,
