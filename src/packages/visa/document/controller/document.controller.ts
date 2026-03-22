@@ -1,8 +1,8 @@
-import { Controller, Get, Param, Res, UseGuards, HttpStatus, Logger, Inject } from '@nestjs/common';
-import { response } from '@/shared/utils/rest-api/response';
-import { Response } from 'express';
-import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { EDocumentRoutes, EVisaRoutes } from '@/shared/constants';
+import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
+import { response } from '@/shared/utils/rest-api/response';
+import { Controller, Get, HttpStatus, Inject, Logger, Param, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { IDocumentUseCase } from '../ports/i.usecase';
 
 @Controller(EVisaRoutes.DOCUMENTS)
@@ -24,9 +24,9 @@ export class DocumentController {
       });
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : 'Error downloading visa');
-      
-      const status = (error as any).status || HttpStatus.INTERNAL_SERVER_ERROR;
-      const message = error.message || 'Failed to process document download';
+
+      const status = error?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      const message = error?.message || 'Failed to process document download';
 
       return response[status](res, { message });
     }
