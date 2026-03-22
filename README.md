@@ -13,6 +13,7 @@ A robust and scalable backend system for the Badalin Ecosystem, built with NestJ
 ## 🛠 Prerequisites
 
 Ensure you have the following installed:
+
 - [Node.js](https://nodejs.org/) (v18 or later)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - [PostgreSQL](https://www.postgresql.org/) database
@@ -22,6 +23,7 @@ Ensure you have the following installed:
 This project adheres to **Hexagonal Architecture** (also known as Ports and Adapters):
 
 ### Folder Structure
+
 - `src/packages`: Contains business domains (Auth, Pilgrim, Submission, etc.).
   - `domain`: Entity definitions.
   - `ports`: Interfaces for UseCases and Repositories.
@@ -31,6 +33,7 @@ This project adheres to **Hexagonal Architecture** (also known as Ports and Adap
 - `src/shared`: Reusable modules such as database utilities, common guards, middleware, and interceptors.
 
 ### Naming Conventions
+
 - **Application Layer**: Uses `camelCase` for all fields and variables.
 - **Database Layer**: Uses `snake_case` for all table and column names (mapped via Prisma `@map` and `@@map`).
 
@@ -72,6 +75,7 @@ $ npx prisma migrate dev --schema=src/shared/database/prisma/schema.prisma
 ```
 
 (Optional) Seed initial data:
+
 ```bash
 $ npm run prisma:seed
 ```
