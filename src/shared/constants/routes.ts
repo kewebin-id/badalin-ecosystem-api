@@ -26,4 +26,7 @@ export enum EAuthRoutes {
   CHECK_USER = '/check-user',
   REGISTER = '/register',
   LOGIN = '/login',
+  FORGOT_PASSWORD = '/forgot-password',
+  VERIFY_RESET_TOKEN = '/verify-reset-token',
+  RESET_PASSWORD = '/reset-password',
 }
