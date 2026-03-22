@@ -63,7 +63,7 @@ export const sendAccountActiveEmail = async (email: string, name: string) => {
     `;
 
     const mailOptions = {
-      from: `"Badalin System" <${process.env.SMTP_USER}>`,
+      from: `"Badalin | Visa Tracker" <${process.env.SMTP_USER}>`,
       to: email,
       subject: 'Welcome to Badalin Ecosystem - Account Activated',
       html: htmlContent,
@@ -145,7 +145,7 @@ export const sendResetPasswordEmail = async (email: string, resetLink: string) =
     `;
 
     const mailOptions = {
-      from: `"Badalin System" <${process.env.SMTP_USER}>`,
+      from: `"Badalin | Visa Tracker" <${process.env.SMTP_USER}>`,
       to: email,
       subject: 'Password Reset Request - Badalin Ecosystem',
       html: htmlContent,
