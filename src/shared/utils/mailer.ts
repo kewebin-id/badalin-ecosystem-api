@@ -56,8 +56,8 @@ export const sendAccountActiveEmail = async (email: string, name: string) => {
         </div>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; text-align: center;">
-          <p style="margin: 5px 0;">This is an automated notification from Badalin Ecosystem System.</p>
-          <p style="margin: 5px 0;">&copy; ${new Date().getFullYear()} Sima Soareka Internasional</p>
+          <p style="margin: 5px 0;">This is an automated notification from Badalin Ecosystem.</p>
+          <p style="margin: 5px 0;">&copy; ${new Date().getFullYear()} Badalin</p>
         </div>
       </div>
     `;
@@ -138,8 +138,8 @@ export const sendResetPasswordEmail = async (email: string, resetLink: string) =
         </div>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; text-align: center;">
-          <p style="margin: 5px 0;">This is an automated notification from Badalin Ecosystem System.</p>
-          <p style="margin: 5px 0;">&copy; ${new Date().getFullYear()} Sima Soareka Internasional</p>
+          <p style="margin: 5px 0;">This is an automated notification from Badalin Ecosystem.</p>
+          <p style="margin: 5px 0;">&copy; ${new Date().getFullYear()} Badalin</p>
         </div>
       </div>
     `;
