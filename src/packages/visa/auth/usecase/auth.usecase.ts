@@ -1,10 +1,22 @@
-import { IUsecaseResponse, globalLogger as Logger, sendAccountActiveEmail } from '@/shared/utils';
+import {
+  IUsecaseResponse,
+  globalLogger as Logger,
+  sendAccountActiveEmail,
+  sendResetPasswordEmail,
+} from '@/shared/utils';
 import { ConflictException, HttpException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { CheckUserDto, LoginDto, RegisterDto, ForgotPasswordDto, VerifyResetTokenDto, ResetPasswordDto } from '../dto/auth.dto';
+import {
+  CheckUserDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  VerifyResetTokenDto,
+} from '../dto/auth.dto';
 import { IAuthRepository } from '../ports/i.repository';
 import { IAuthUseCase } from '../ports/i.usecase';
 
@@ -128,18 +140,18 @@ export class AuthUseCase implements IAuthUseCase {
     try {
       const user = await this.repository.findByIdentifier(dto.identifier);
       if (!user) {
-        return { data: true }; // Don't reveal user existence
+        return { data: true };
       }
 
       const rawToken = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       await this.repository.updateResetToken(user.id, rawToken, expiresAt);
 
       if (user.email) {
-        const resetLink = `${process.env.FRONTEND_URL || 'https://badalin.com'}/auth/reset-password?token=${rawToken}`;
-        sendAccountActiveEmail(user.email, user.phoneNumber || user.email).catch((err) => {
-           // We will replace this with sendResetPasswordEmail in a moment
+        const resetLink = `${process.env.FRONTEND_URL || 'https://badalin.com'}${process.env.FRONTEND_RESET_PASSWORD_ROUTE}?token=${rawToken}`;
+        sendResetPasswordEmail(user.email, resetLink).catch((err) => {
+          Logger.error('Failed to send reset password email', err.message, 'auth.usecase.ts - forgotPassword');
         });
       }
 
@@ -191,5 +203,4 @@ export class AuthUseCase implements IAuthUseCase {
       };
     }
   };
-
 }
