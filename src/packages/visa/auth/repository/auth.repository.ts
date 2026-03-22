@@ -2,12 +2,12 @@ import { globalLogger as Logger } from '@/shared/utils';
 import { clientDb } from '@/shared/utils/db';
 import { User, UserRole } from '@prisma/client';
 import { RegisterDto } from '../dto/auth.dto';
-import { IAuthRepository } from '../ports/i.repository';
+import { IAuthRepository, UserWithAgency } from '../ports/i.repository';
 
 export class PrismaAuthRepository implements IAuthRepository {
   private readonly db = clientDb;
 
-  findByIdentifier = async (identifier: string): Promise<User | null> => {
+  findByIdentifier = async (identifier: string): Promise<UserWithAgency | null> => {
     try {
       return await this.db.user.findFirst({
         where: {
@@ -35,6 +35,45 @@ export class PrismaAuthRepository implements IAuthRepository {
 
     } catch (error) {
       Logger.error('Error in create user:', error);
+      throw error;
+    }
+  };
+
+  updateResetToken = async (userId: string, token: string | null, expiresAt: Date | null): Promise<void> => {
+    try {
+      await this.db.user.update({
+        where: { id: userId },
+        data: { resetPasswordToken: token, resetPasswordExpires: expiresAt },
+      });
+    } catch (error) {
+      Logger.error('Error in updateResetToken:', error);
+      throw error;
+    }
+  };
+
+  findByResetToken = async (token: string): Promise<User | null> => {
+    try {
+      return await this.db.user.findFirst({
+        where: { resetPasswordToken: token },
+      });
+    } catch (error) {
+      Logger.error('Error in findByResetToken:', error);
+      throw error;
+    }
+  };
+
+  updatePassword = async (userId: string, targetPassword: string): Promise<void> => {
+    try {
+      await this.db.user.update({
+        where: { id: userId },
+        data: {
+          password: targetPassword,
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+        },
+      });
+    } catch (error) {
+      Logger.error('Error in updatePassword:', error);
       throw error;
     }
   };
