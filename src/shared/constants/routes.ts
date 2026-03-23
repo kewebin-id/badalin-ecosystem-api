@@ -11,6 +11,7 @@ export enum EVisaRoutes {
   PILGRIMS = `${EServiceRoutes.VISA}/pilgrims`,
   TRANSACTIONS = `${EServiceRoutes.VISA}/transactions`,
   DOCUMENTS = `${EServiceRoutes.VISA}/documents`,
+  DASHBOARD = `${EServiceRoutes.VISA}/dashboard`,
 }
 
 export enum ESubmissionRoutes {

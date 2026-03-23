@@ -6,6 +6,7 @@ import { AuthModule } from './visa/auth.module';
 import { PilgrimModule } from './visa/pilgrim.module';
 import { PaymentModule } from './visa/payment.module';
 import { DocumentModule } from './visa/document.module';
+import { DashboardModule } from './visa/dashboard.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AgencyMiddleware } from '../shared/middleware/agency.middleware';
@@ -22,6 +23,7 @@ import { ApiKeyGuard } from '../shared/guards/api-key.guard';
     PilgrimModule,
     PaymentModule,
     DocumentModule,
+    DashboardModule,
     ScheduleModule.forRoot(),
   ],
   providers: [
