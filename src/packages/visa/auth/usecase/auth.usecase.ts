@@ -57,6 +57,7 @@ export class AuthUseCase implements IAuthUseCase {
           password: hashedPassword,
         },
         agencySlug || process.env.DEFAULT_AGENCY,
+        'SYSTEM_REGISTRATION',
       );
 
       if (user.email) {
@@ -148,7 +149,7 @@ export class AuthUseCase implements IAuthUseCase {
       const rawToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      await this.repository.updateResetToken(user.id, rawToken, expiresAt);
+      await this.repository.updateResetToken(user.id, rawToken, expiresAt, user.id);
 
       if (user.email) {
         const resetLink = `${process.env.FRONTEND_URL || 'https://badalin.com'}${process.env.FRONTEND_RESET_PASSWORD_ROUTE}?token=${rawToken}`;
@@ -192,8 +193,11 @@ export class AuthUseCase implements IAuthUseCase {
         throw new HttpException('Invalid or expired reset token', 400);
       }
 
+      Logger.debug(`Resetting password for user ${user.id}. Raw password length: ${dto.password.length}`, 'AuthUseCase');
       const hashedPassword = await bcrypt.hash(dto.password, 10);
-      await this.repository.updatePassword(user.id, hashedPassword);
+      Logger.debug(`Hashed password for user ${user.id}. Hash prefix: ${hashedPassword.substring(0, 10)}...`, 'AuthUseCase');
+
+      await this.repository.updatePassword(user.id, hashedPassword, user.id);
 
       return { data: true };
     } catch (error) {
