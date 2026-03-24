@@ -53,6 +53,7 @@ model User {
   email                String?          @unique
   phoneNumber          String?          @unique @map("phone_number")
   password             String
+  fullName             String?          @map("full_name")
   role                 UserRole         @default(PILGRIM)
   agencySlug           String?          @map("agency_slug")
   agency               Agency?          @relation(fields: [agencySlug], references: [slug])

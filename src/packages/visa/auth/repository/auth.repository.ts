@@ -37,6 +37,7 @@ export class PrismaAuthRepository implements IAuthRepository {
         email: isEmail ? dto.identifier : dto.email || null,
         phoneNumber: !isEmail ? dto.identifier : dto.phoneNumber || null,
         password: dto.password,
+        fullName: dto.fullName,
         agencySlug: agencySlug || null,
         role: UserRole.PILGRIM,
         createdBy: createdBy || null,

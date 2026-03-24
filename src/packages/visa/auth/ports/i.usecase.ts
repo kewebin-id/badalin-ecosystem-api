@@ -10,6 +10,8 @@ export interface IAuthUseCase {
       id: string;
       email: string;
       phoneNumber: string;
+      fullName: string | null;
+      role: string;
       agency: {
         name: string;
         slug: string;
