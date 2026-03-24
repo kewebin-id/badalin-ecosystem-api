@@ -1,7 +1,7 @@
 import { Inject, Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreatePilgrimDto, UpdatePilgrimDto } from '../dto/pilgrim.dto';
 import { IPilgrimUseCase } from '../ports/i.usecase';
-import { IPilgrimRepository } from '../ports/i.repository';
+import { IPilgrimRepository, IUserContext } from '../ports/i.repository';
 import { Pilgrim } from '@prisma/client';
 
 @Injectable()
@@ -11,11 +11,11 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     private readonly repository: IPilgrimRepository,
   ) {}
 
-  findAll = async (leaderId: string, agencySlug: string): Promise<Pilgrim[]> => {
-    return this.repository.findAll(leaderId, agencySlug);
+  findAll = async (ctx: IUserContext): Promise<Pilgrim[]> => {
+    return this.repository.findAll(ctx);
   };
 
-  create = async (leaderId: string, agencySlug: string, dto: CreatePilgrimDto): Promise<Pilgrim> => {
+  create = async (ctx: IUserContext, dto: CreatePilgrimDto): Promise<Pilgrim> => {
     this.validateOcr(dto);
     const { ocrConfidence, dob, passportExpiry, ...data } = dto;
     const status = this.checkPassportExpiry(passportExpiry);
@@ -24,29 +24,43 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       ...data,
       birthDate: new Date(dob),
       passportExpiry: new Date(passportExpiry),
-      leaderId,
-      agencySlug,
+      leaderId: ctx.id,
+      agencySlug: ctx.agencySlug,
       isComplete: status === 'Active',
     });
   };
 
-  update = async (id: string, leaderId: string, agencySlug: string, dto: UpdatePilgrimDto): Promise<Pilgrim> => {
-    const pilgrim = await this.repository.findById(id, leaderId, agencySlug);
+  update = async (id: string, ctx: IUserContext, dto: UpdatePilgrimDto): Promise<Pilgrim> => {
+    const pilgrim = await this.repository.findById(id, ctx);
 
     if (!pilgrim) {
-      throw new NotFoundException('Pilgrim not found');
+      throw new NotFoundException('Pilgrim not found or access denied');
     }
 
     this.validateOcr(dto);
     const { ocrConfidence, dob, passportExpiry, ...data } = dto;
     const status = this.checkPassportExpiry(passportExpiry);
 
-    return this.repository.update(id, {
-      ...data,
-      birthDate: new Date(dob),
-      passportExpiry: new Date(passportExpiry),
-      isComplete: status === 'Active',
-    });
+    return this.repository.update(
+      id,
+      {
+        ...data,
+        birthDate: new Date(dob),
+        passportExpiry: new Date(passportExpiry),
+        isComplete: status === 'Active',
+      },
+      ctx,
+    );
+  };
+
+  delete = async (id: string, ctx: IUserContext): Promise<Pilgrim> => {
+    const pilgrim = await this.repository.findById(id, ctx);
+
+    if (!pilgrim) {
+      throw new NotFoundException('Pilgrim not found or access denied');
+    }
+
+    return this.repository.delete(id, ctx);
   };
 
   private validateOcr = (dto: CreatePilgrimDto | UpdatePilgrimDto) => {

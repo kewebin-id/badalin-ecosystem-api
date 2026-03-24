@@ -1,38 +1,30 @@
 import { EServiceRoutes, ESubmissionRoutes, validationMessage } from '@/shared/constants';
 import { response } from '@/shared/utils/rest-api/response';
-import { Body, Controller, Headers, HttpStatus, Inject, Logger, Post, Res } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Body, Controller, HttpStatus, Inject, Logger, Post, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { SubmitVisaDto } from '../dto/submission.dto';
 import { VisaSubmissionControllerPort } from '../ports/i.controller';
 import { IVisaSubmissionUseCase } from '../ports/i.usecase';
+import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
+import { UserContext } from '@/shared/decorators/user-context.decorator';
+import { IUserContext } from '@/shared/utils/rest-api/types';
 
 @Controller(EServiceRoutes.VISA)
+@UseGuards(JwtAuthGuard)
 export class VisaSubmissionController implements VisaSubmissionControllerPort {
   constructor(
     @Inject('IVisaSubmissionUseCase')
     private readonly submitVisaUseCase: IVisaSubmissionUseCase,
-    private readonly jwtService: JwtService,
   ) {}
 
   @Post(ESubmissionRoutes.SUBMIT)
   async create(
     @Body() dto: SubmitVisaDto,
-    @Headers('authorization') token: string,
+    @UserContext() ctx: IUserContext,
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      const jwtToken = token?.replace('Bearer ', '');
-
-      if (!jwtToken) {
-        return response[HttpStatus.UNAUTHORIZED](res, { message: 'Token is required' });
-      }
-
-      const decoded = this.jwtService.verify(jwtToken);
-      const requesterId = decoded.id;
-      const leaderId = decoded.id;
-
-      const result = await this.submitVisaUseCase.create(dto, requesterId, leaderId);
+      const result = await this.submitVisaUseCase.create(ctx, dto);
 
       if (result?.error) {
         return response[HttpStatus.BAD_REQUEST](res, {
@@ -47,7 +39,7 @@ export class VisaSubmissionController implements VisaSubmissionControllerPort {
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : 'Error in submit');
       return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
-        message: 'Invalid or expired token',
+        message: error instanceof Error ? error.message : 'Failed to submit visa',
       });
     }
   }

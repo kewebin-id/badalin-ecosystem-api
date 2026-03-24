@@ -3,6 +3,7 @@ import { VerifyStatus } from '@prisma/client';
 import { VisaSubmissionEntity } from '../domain/submission.entity';
 import { SubmitVisaDto } from '../dto/submission.dto';
 import { IVisaSubmissionRepository, IVisaSubmissionUseCase } from '../ports';
+import { IUserContext } from '@/shared/utils/rest-api/types';
 
 @Injectable()
 export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
@@ -11,15 +12,15 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
     private readonly repository: IVisaSubmissionRepository,
   ) {}
 
-  async create(dto: SubmitVisaDto, requesterId: string, leaderId: string): Promise<{ data: VisaSubmissionEntity }> {
-    const agency = await this.repository.findAgencyBySlug(dto.agencySlug);
+  async create(ctx: IUserContext, dto: SubmitVisaDto): Promise<{ data: VisaSubmissionEntity }> {
+    const agency = await this.repository.findAgencyBySlug(ctx.agencySlug);
     if (!agency) {
       throw new NotFoundException('Agency not found');
     }
 
-    const pilgrims = await this.repository.findPilgrimsByIds(dto.pilgrimIds);
+    const pilgrims = await this.repository.findPilgrimsByIds(dto.pilgrimIds, ctx);
     if (pilgrims.length !== dto.pilgrimIds.length) {
-      throw new BadRequestException('Some pilgrims not found');
+      throw new BadRequestException('Some pilgrims not found or access denied');
     }
 
     for (const pilgrim of pilgrims) {
@@ -47,11 +48,11 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
 
     const submission = await this.repository.create(
       {
-        leaderId,
-        agencySlug: dto.agencySlug,
+        leaderId: ctx.id,
+        agencySlug: ctx.agencySlug,
         totalAmount,
         resultSnapshot: JSON.parse(JSON.stringify(pilgrims)),
-        createdBy: requesterId,
+        createdBy: ctx.id,
         status: VerifyStatus.IN_REVIEW,
         flightEta: new Date(dto.flightEta),
         flightEtd: new Date(dto.flightEtd),
@@ -66,7 +67,7 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
     return { data: submission };
   }
 
-  async getSubmission(id: string): Promise<VisaSubmissionEntity | null> {
-    return this.repository.findById(id);
+  async getSubmission(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity | null> {
+    return this.repository.findById(id, ctx);
   }
 }

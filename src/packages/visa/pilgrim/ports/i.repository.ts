@@ -1,8 +1,15 @@
 import { Pilgrim } from '@prisma/client';
 
+export interface IUserContext {
+  id: string;
+  role: string;
+  agencySlug: string;
+}
+
 export interface IPilgrimRepository {
-  findAll: (leaderId: string, agencySlug: string) => Promise<Pilgrim[]>;
-  findById: (id: string, leaderId: string, agencySlug: string) => Promise<Pilgrim | null>;
+  findAll: (ctx: IUserContext) => Promise<Pilgrim[]>;
+  findById: (id: string, ctx: IUserContext) => Promise<Pilgrim | null>;
   create: (data: any) => Promise<Pilgrim>;
-  update: (id: string, data: any) => Promise<Pilgrim>;
+  update: (id: string, data: any, ctx: IUserContext) => Promise<Pilgrim>;
+  delete: (id: string, ctx: IUserContext) => Promise<Pilgrim>;
 }

@@ -110,6 +110,7 @@ export class AuthUseCase implements IAuthUseCase {
         email: user.email || '',
         phoneNumber: user.phoneNumber || '',
         role: user.role,
+        agencySlug: user.agency?.slug || null,
       };
 
       const token = this.jwtService.sign(payload);
