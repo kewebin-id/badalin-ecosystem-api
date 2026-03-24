@@ -3,6 +3,8 @@ import { CreatePilgrimDto, UpdatePilgrimDto } from '../dto/pilgrim.dto';
 import { IPilgrimUseCase } from '../ports/i.usecase';
 import { IPilgrimRepository, IUserContext } from '../ports/i.repository';
 import { Pilgrim } from '@prisma/client';
+import { Pagination, PaginationDto } from '@/shared/utils/rest-api/pagination';
+import { IPaginationResponse } from '@/shared/utils/rest-api/types';
 
 @Injectable()
 export class PilgrimUseCase implements IPilgrimUseCase {
@@ -11,8 +13,10 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     private readonly repository: IPilgrimRepository,
   ) {}
 
-  findAll = async (ctx: IUserContext): Promise<Pilgrim[]> => {
-    return this.repository.findAll(ctx);
+  findAll = async (ctx: IUserContext, paginationDto: PaginationDto): Promise<IPaginationResponse<Pilgrim>> => {
+    const pagination = new Pagination(paginationDto.page, paginationDto.limit);
+    const result = await this.repository.findAll(ctx, pagination.offset, pagination.limit);
+    return pagination.paginate(result);
   };
 
   create = async (ctx: IUserContext, dto: CreatePilgrimDto): Promise<Pilgrim> => {

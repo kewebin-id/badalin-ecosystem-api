@@ -1,9 +1,11 @@
 import { Pilgrim } from '@prisma/client';
 import { CreatePilgrimDto, UpdatePilgrimDto } from '../dto/pilgrim.dto';
 import { IUserContext } from './i.repository';
+import { PaginationDto } from '@/shared/utils/rest-api/pagination';
+import { IPaginationResponse } from '@/shared/utils/rest-api/types';
 
 export interface IPilgrimUseCase {
-  findAll: (ctx: IUserContext) => Promise<Pilgrim[]>;
+  findAll: (ctx: IUserContext, paginationDto: PaginationDto) => Promise<IPaginationResponse<Pilgrim>>;
   create: (ctx: IUserContext, dto: CreatePilgrimDto) => Promise<Pilgrim>;
   update: (id: string, ctx: IUserContext, dto: UpdatePilgrimDto) => Promise<Pilgrim>;
   delete: (id: string, ctx: IUserContext) => Promise<Pilgrim>;
