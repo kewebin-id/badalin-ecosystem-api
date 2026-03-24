@@ -10,7 +10,7 @@ export class DashboardRepository implements IDashboardRepository {
 
   findHistoryByLeaderAndAgency = async (leaderId: string, agencySlug: string): Promise<VisaSubmission[]> => {
     try {
-      return await this.db.visaSubmission.findMany({
+      const result = await this.db.visaSubmission.findMany({
         where: {
           leaderId: leaderId,
           agencySlug: agencySlug,
@@ -20,8 +20,9 @@ export class DashboardRepository implements IDashboardRepository {
           createdAt: 'desc',
         },
       });
+      return result;
     } catch (error) {
-      Logger.error('Error in findHistoryByLeaderAndAgency:', error);
+      Logger.error(`Error in findHistoryByLeaderAndAgency: leaderId=${leaderId}, agencySlug=${agencySlug}`, error, 'DashboardRepository');
       throw error;
     }
   };
