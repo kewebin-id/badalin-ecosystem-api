@@ -9,5 +9,5 @@ export interface IHistoryResponse {
 }
 
 export interface IDashboardUseCase {
-  getHistory: (leaderId: string, agencyId: string) => Promise<IUsecaseResponse<IHistoryResponse[]>>;
+  getHistory: (leaderId: string, agencySlug: string) => Promise<IUsecaseResponse<IHistoryResponse[]>>;
 }

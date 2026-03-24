@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IDashboardUseCase, IHistoryResponse } from '../ports/i.usecase';
 import { IDashboardRepository } from '../ports/i.repository';
 import { IUsecaseResponse, globalLogger as Logger } from '@/shared/utils';
+import { VisaSubmission } from '@prisma/client';
 
 @Injectable()
 export class DashboardUseCase implements IDashboardUseCase {
@@ -10,9 +11,9 @@ export class DashboardUseCase implements IDashboardUseCase {
     private readonly repository: IDashboardRepository,
   ) {}
 
-  getHistory = async (leaderId: string, agencyId: string): Promise<IUsecaseResponse<IHistoryResponse[]>> => {
+  getHistory = async (leaderId: string, agencySlug: string): Promise<IUsecaseResponse<IHistoryResponse[]>> => {
     try {
-      const submissions = await this.repository.findHistoryByLeaderAndAgency(leaderId, agencyId);
+      const submissions: VisaSubmission[] = await this.repository.findHistoryByLeaderAndAgency(leaderId, agencySlug);
 
       const history: IHistoryResponse[] = submissions.map((sub) => ({
         transaction_id: sub.id,
