@@ -4,9 +4,10 @@ import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { RolesGuard } from '@/shared/guards/roles.guard';
 import { Roles } from '@/shared/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
-import { IDashboardUseCase } from '../ports/i.usecase';
+import { IDashboardUseCase, IHistoryResponse } from '../ports/i.usecase';
 import { EVisaRoutes } from '@/shared/constants/routes';
 import { response } from '@/shared/utils/rest-api/response';
+import { IUsecaseResponse } from '@/shared/utils/rest-api/types';
 
 @Controller(EVisaRoutes.DASHBOARD)
 export class DashboardController {
@@ -20,9 +21,9 @@ export class DashboardController {
   @Roles(UserRole.PILGRIM)
   async getHistory(@Req() req: Request) {
     const user = req['user'];
-    const agencyId = req.cookies['agency_id'];
+    const agencySlug = req.cookies['agency_slug'];
 
-    const result = await this.useCase.getHistory(user.id, agencyId);
+    const result: IUsecaseResponse<IHistoryResponse[]> = await this.useCase.getHistory(user.id, agencySlug);
 
     if (result.error) {
       return response[result.error.code || 500](null, {

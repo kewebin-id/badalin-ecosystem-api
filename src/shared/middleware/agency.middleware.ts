@@ -15,7 +15,7 @@ export class AgencyMiddleware implements NestMiddleware {
       });
 
       if (agency) {
-        res.cookie('agency_id', agency.id, {
+        res.cookie('agency_slug', agency.slug, {
           httpOnly: true,
           maxAge: 30 * 24 * 60 * 60 * 1000, 
         });
