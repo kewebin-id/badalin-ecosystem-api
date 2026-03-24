@@ -1,10 +1,17 @@
 import { IVisaSubmissionRepository } from '../ports';
 import { VisaSubmissionEntity } from '../domain/submission.entity';
-import { PaymentStatus, VerifyStatus, Pilgrim, Agency, Prisma } from '@prisma/client';
+import { PaymentStatus, VerifyStatus, Pilgrim, Agency, Prisma, UserRole } from '@prisma/client';
 import { clientDb } from '@/shared/utils/db';
+import { IUserContext } from '@/shared/utils/rest-api/types';
 
 export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository {
   private readonly db = clientDb;
+
+  private getQueryFilter(ctx: IUserContext) {
+    if (ctx.role === UserRole.SUPERADMIN) return {};
+    if (ctx.role === UserRole.PROVIDER) return { agencySlug: ctx.agencySlug };
+    return { leaderId: ctx.id, agencySlug: ctx.agencySlug };
+  }
 
   async create(data: Partial<VisaSubmissionEntity>, memberIds: string[]): Promise<VisaSubmissionEntity> {
     const submission = await this.db.visaSubmission.create({
@@ -38,9 +45,9 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
     });
   }
 
-  async findById(id: string): Promise<VisaSubmissionEntity | null> {
-    const submission = await this.db.visaSubmission.findUnique({
-      where: { id },
+  async findById(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity | null> {
+    const submission = await this.db.visaSubmission.findFirst({
+      where: { id, ...this.getQueryFilter(ctx) },
       include: { members: true },
     });
 
@@ -52,7 +59,10 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
     });
   }
 
-  async updateStatus(id: string, status: VerifyStatus): Promise<VisaSubmissionEntity> {
+  async updateStatus(id: string, status: VerifyStatus, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+    const exists = await this.findById(id, ctx);
+    if (!exists) throw new Error('Visa submission not found or access denied');
+
     const submission = await this.db.visaSubmission.update({
       where: { id },
       data: { status, verifyStatus: status },
@@ -64,7 +74,15 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
     });
   }
 
-  async updatePaymentStatus(id: string, status: PaymentStatus, proofOfPayment?: string): Promise<VisaSubmissionEntity> {
+  async updatePaymentStatus(
+    id: string,
+    status: PaymentStatus,
+    ctx: IUserContext,
+    proofOfPayment?: string,
+  ): Promise<VisaSubmissionEntity> {
+    const exists = await this.findById(id, ctx);
+    if (!exists) throw new Error('Visa submission not found or access denied');
+
     const submission = await this.db.visaSubmission.update({
       where: { id },
       data: { paymentStatus: status, proofOfPayment },
@@ -76,9 +94,9 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
     });
   }
 
-  async findGroupMembers(leaderId: string): Promise<Pilgrim[]> {
+  async findGroupMembers(leaderId: string, agencySlug: string): Promise<Pilgrim[]> {
     return this.db.pilgrim.findMany({
-      where: { leaderId },
+      where: { leaderId, agencySlug },
     });
   }
 
@@ -88,10 +106,11 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
     });
   }
 
-  async findPilgrimsByIds(ids: string[]): Promise<Pilgrim[]> {
+  async findPilgrimsByIds(ids: string[], ctx: IUserContext): Promise<Pilgrim[]> {
     return this.db.pilgrim.findMany({
       where: {
         id: { in: ids },
+        ...this.getQueryFilter(ctx),
       },
     });
   }

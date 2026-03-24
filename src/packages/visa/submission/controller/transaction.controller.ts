@@ -1,11 +1,13 @@
 import { ESubmissionRoutes, EVisaRoutes, validationMessage } from '@/shared/constants';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { response } from '@/shared/utils/rest-api/response';
-import { Body, Controller, HttpStatus, Inject, Logger, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Inject, Logger, Param, Post, Res, UseGuards } from '@nestjs/common';
 import { PaymentStatus } from '@prisma/client';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { SubmitVisaDto } from '../dto/submission.dto';
 import { IVisaSubmissionRepository, IVisaSubmissionUseCase } from '../ports';
+import { UserContext } from '@/shared/decorators/user-context.decorator';
+import { IUserContext } from '@/shared/utils/rest-api/types';
 
 import { VisaSubmissionTransactionControllerPort } from '../ports/i.controller';
 
@@ -20,10 +22,13 @@ export class TransactionController implements VisaSubmissionTransactionControlle
   ) {}
 
   @Post()
-  async create(@Body() dto: SubmitVisaDto, @Req() req: Request, @Res() res: Response): Promise<Response> {
+  async create(
+    @Body() dto: SubmitVisaDto,
+    @UserContext() ctx: IUserContext,
+    @Res() res: Response,
+  ): Promise<Response> {
     try {
-      const user = req['user'];
-      const result = await this.submitVisaUseCase.create(dto, user.id, user.id);
+      const result = await this.submitVisaUseCase.create(ctx, dto);
       return response[HttpStatus.CREATED](res, {
         message: validationMessage('Transaction')[201](),
         data: result.data,
@@ -40,17 +45,18 @@ export class TransactionController implements VisaSubmissionTransactionControlle
   async uploadProof(
     @Param('id') id: string,
     @Body('proofUrl') proofUrl: string,
+    @UserContext() ctx: IUserContext,
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      await this.repository.updatePaymentStatus(id, PaymentStatus.CHECKING, proofUrl);
+      await this.repository.updatePaymentStatus(id, PaymentStatus.CHECKING, ctx, proofUrl);
       return response[HttpStatus.OK](res, {
         message: 'Proof uploaded successfully',
       });
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : 'Error uploading proof');
       return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
-        message: 'Failed to upload proof',
+        message: error instanceof Error ? error.message : 'Failed to upload proof',
       });
     }
   }

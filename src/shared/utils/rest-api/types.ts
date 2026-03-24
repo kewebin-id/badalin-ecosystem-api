@@ -73,3 +73,9 @@ export interface IPaginationResponse<T> {
     next: string | null;
   };
 }
+
+export interface IUserContext {
+  id: string;
+  role: string;
+  agencySlug: string;
+}

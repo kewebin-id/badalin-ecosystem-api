@@ -1,8 +1,10 @@
 import { Pilgrim } from '@prisma/client';
 import { CreatePilgrimDto, UpdatePilgrimDto } from '../dto/pilgrim.dto';
+import { IUserContext } from './i.repository';
 
 export interface IPilgrimUseCase {
-  findAll: (leaderId: string, agencySlug: string) => Promise<Pilgrim[]>;
-  create: (leaderId: string, agencySlug: string, dto: CreatePilgrimDto) => Promise<Pilgrim>;
-  update: (id: string, leaderId: string, agencySlug: string, dto: UpdatePilgrimDto) => Promise<Pilgrim>;
+  findAll: (ctx: IUserContext) => Promise<Pilgrim[]>;
+  create: (ctx: IUserContext, dto: CreatePilgrimDto) => Promise<Pilgrim>;
+  update: (id: string, ctx: IUserContext, dto: UpdatePilgrimDto) => Promise<Pilgrim>;
+  delete: (id: string, ctx: IUserContext) => Promise<Pilgrim>;
 }
