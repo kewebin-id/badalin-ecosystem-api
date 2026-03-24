@@ -51,11 +51,13 @@ export class AuthUseCase implements IAuthUseCase {
       }
 
       const hashedPassword = await bcrypt.hash(dto.password, 10);
+      const data = {
+        ...dto,
+        fullName: dto.fullName,
+        password: hashedPassword,
+      };
       const user = await this.repository.create(
-        {
-          ...dto,
-          password: hashedPassword,
-        },
+        data,
         agencySlug || process.env.DEFAULT_AGENCY,
         'SYSTEM_REGISTRATION',
       );
@@ -85,6 +87,7 @@ export class AuthUseCase implements IAuthUseCase {
         id: string;
         email: string;
         phoneNumber: string;
+        fullName: string | null;
         role: string;
         agency: {
           name: string;
@@ -117,6 +120,7 @@ export class AuthUseCase implements IAuthUseCase {
             id: user.id,
             email: user.email || '',
             phoneNumber: user.phoneNumber || '',
+            fullName: user.fullName,
             role: user.role,
             agency: user.agency
               ? {
