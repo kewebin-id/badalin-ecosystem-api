@@ -34,9 +34,9 @@ export class Pagination {
   paginate<T>(data: PaginationInterface<T>) {
     const totalPages = Math.ceil(data.count / this.limit);
     return {
-      total_items: data.count,
-      total_pages: totalPages,
-      current_page: this.page,
+      totalItems: data.count,
+      totalPages: totalPages,
+      currentPage: this.page,
       items: data.rows,
       links: {
         prev: this.page > 1 ? `?page=${this.page - 1}&limit=${this.limit}` : null,
