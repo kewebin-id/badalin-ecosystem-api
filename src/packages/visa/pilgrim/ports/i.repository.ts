@@ -7,7 +7,7 @@ export interface IUserContext {
 }
 
 export interface IPilgrimRepository {
-  findAll: (ctx: IUserContext) => Promise<Pilgrim[]>;
+  findAll: (ctx: IUserContext, skip?: number, take?: number) => Promise<{ count: number; rows: Pilgrim[] }>;
   findById: (id: string, ctx: IUserContext) => Promise<Pilgrim | null>;
   create: (data: any) => Promise<Pilgrim>;
   update: (id: string, data: any, ctx: IUserContext) => Promise<Pilgrim>;

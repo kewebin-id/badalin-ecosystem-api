@@ -11,10 +11,18 @@ export class PrismaPilgrimRepository implements IPilgrimRepository {
     return { leaderId: ctx.id, agencySlug: ctx.agencySlug };
   }
 
-  findAll = async (ctx: IUserContext): Promise<Pilgrim[]> => {
-    return this.db.pilgrim.findMany({
-      where: { ...this.getQueryFilter(ctx) },
-    });
+  findAll = async (ctx: IUserContext, skip: number = 0, take: number = 10): Promise<{ count: number; rows: Pilgrim[] }> => {
+    const where = this.getQueryFilter(ctx);
+    const [count, rows] = await this.db.$transaction([
+      this.db.pilgrim.count({ where }),
+      this.db.pilgrim.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+    return { count, rows };
   };
 
   findById = async (id: string, ctx: IUserContext): Promise<Pilgrim | null> => {

@@ -1,4 +1,5 @@
-import { IUsecaseResponse } from '@/shared/utils/rest-api/types';
+import { IUsecaseResponse, IPaginationResponse } from '@/shared/utils/rest-api/types';
+import { PaginationDto } from '@/shared/utils/rest-api/pagination';
 
 export interface IHistoryResponse {
   transaction_id: string;
@@ -9,5 +10,9 @@ export interface IHistoryResponse {
 }
 
 export interface IDashboardUseCase {
-  getHistory: (leaderId: string, agencySlug: string) => Promise<IUsecaseResponse<IHistoryResponse[]>>;
+  getHistory: (
+    leaderId: string,
+    agencySlug: string,
+    paginationDto: PaginationDto,
+  ) => Promise<IUsecaseResponse<IPaginationResponse<IHistoryResponse>>>;
 }

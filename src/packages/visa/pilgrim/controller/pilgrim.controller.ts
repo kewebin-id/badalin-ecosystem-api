@@ -11,6 +11,7 @@ import {
   Res,
   UseGuards,
   Logger,
+  Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
@@ -20,6 +21,7 @@ import { EVisaRoutes, validationMessage } from '@/shared/constants';
 import { response } from '@/shared/utils/rest-api/response';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { IUserContext } from '@/shared/utils/rest-api/types';
+import { PaginationDto } from '@/shared/utils/rest-api/pagination';
 
 @Controller(EVisaRoutes.PILGRIMS)
 @UseGuards(JwtAuthGuard)
@@ -30,12 +32,12 @@ export class PilgrimController {
   ) {}
 
   @Get()
-  async findAll(@UserContext() ctx: IUserContext, @Res() res: Response) {
+  async findAll(@UserContext() ctx: IUserContext, @Query() paginationDto: PaginationDto, @Res() res: Response) {
     try {
-      const pilgrims = await this.pilgrimUseCase.findAll(ctx);
+      const result = await this.pilgrimUseCase.findAll(ctx, paginationDto);
       return response[HttpStatus.OK](res, {
         message: 'Success fetch pilgrims',
-        data: pilgrims,
+        data: result,
       });
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : 'Error fetching pilgrims');

@@ -8,22 +8,30 @@ import { globalLogger as Logger } from '@/shared/utils';
 export class DashboardRepository implements IDashboardRepository {
   private readonly db = clientDb;
 
-  findHistoryByLeaderAndAgency = async (leaderId: string, agencySlug: string): Promise<VisaSubmission[]> => {
-    try {
-      const result = await this.db.visaSubmission.findMany({
-        where: {
-          leaderId: leaderId,
-          agencySlug: agencySlug,
-          deletedAt: null,
-        },
+  findHistoryByLeaderAndAgency = async (
+    leaderId: string,
+    agencySlug: string,
+    skip: number = 0,
+    take: number = 10,
+  ): Promise<{ count: number; rows: VisaSubmission[] }> => {
+    const where = {
+      leaderId: leaderId,
+      agencySlug: agencySlug,
+      deletedAt: null,
+    };
+
+    const [count, rows] = await this.db.$transaction([
+      this.db.visaSubmission.count({ where }),
+      this.db.visaSubmission.findMany({
+        where,
+        skip,
+        take,
         orderBy: {
           createdAt: 'desc',
         },
-      });
-      return result;
-    } catch (error) {
-      Logger.error(`Error in findHistoryByLeaderAndAgency: leaderId=${leaderId}, agencySlug=${agencySlug}`, error, 'DashboardRepository');
-      throw error;
-    }
+      }),
+    ]);
+
+    return { count, rows };
   };
 }
