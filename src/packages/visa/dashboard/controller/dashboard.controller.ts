@@ -1,5 +1,5 @@
-import { Controller, Get, Inject, UseGuards, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Inject, UseGuards, Req, Res } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { RolesGuard } from '@/shared/guards/roles.guard';
 import { Roles } from '@/shared/decorators/roles.decorator';
@@ -19,19 +19,19 @@ export class DashboardController {
   @Get('/history')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.PILGRIM)
-  async getHistory(@Req() req: Request) {
+  async getHistory(@Req() req: Request, @Res() res: Response) {
     const user = req['user'];
     const agencySlug = req.cookies['agency_slug'];
 
     const result: IUsecaseResponse<IHistoryResponse[]> = await this.useCase.getHistory(user.id, agencySlug);
 
     if (result.error) {
-      return response[result.error.code || 500](null, {
+      return response[result.error.code || 500](res, {
         message: result.error.message,
       });
     }
 
-    return response[200](null, {
+    return response[200](res, {
       message: 'History fetched successfully',
       data: result.data,
     });

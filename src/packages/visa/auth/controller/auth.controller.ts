@@ -36,7 +36,7 @@ export class AuthController {
   @Post(EAuthRoutes.REGISTER)
   async register(@Body() dto: RegisterDto, @Res() res: Response) {
     try {
-      const agencySlug = res.req.cookies?.['agency_id'];
+      const agencySlug = res.req.cookies?.['agency_slug'];
       const responseData = await this.authUseCase.register(dto, agencySlug);
       if (responseData.error) {
         return response[responseData.error.code || HttpStatus.INTERNAL_SERVER_ERROR](res, {
