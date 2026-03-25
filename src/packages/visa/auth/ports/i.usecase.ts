@@ -12,6 +12,7 @@ export interface IAuthUseCase {
       phoneNumber: string;
       fullName: string | null;
       role: string;
+      photoUrl: string | null;
       agency: {
         name: string;
         slug: string;

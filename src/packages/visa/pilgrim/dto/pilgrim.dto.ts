@@ -38,6 +38,18 @@ export class CreatePilgrimDto {
   @Min(0)
   @Max(100)
   ocrConfidence?: number;
+
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  ktpUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  passportUrl?: string;
 }
 
 export class UpdatePilgrimDto extends CreatePilgrimDto {}
