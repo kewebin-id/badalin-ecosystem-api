@@ -89,6 +89,7 @@ export class AuthUseCase implements IAuthUseCase {
         phoneNumber: string;
         fullName: string | null;
         role: string;
+        photoUrl: string | null;
         agency: {
           name: string;
           slug: string;
@@ -123,6 +124,7 @@ export class AuthUseCase implements IAuthUseCase {
             phoneNumber: user.phoneNumber || '',
             fullName: user.fullName,
             role: user.role,
+            photoUrl: user.photoUrl,
             agency: user.agency
               ? {
                   name: user.agency.name,

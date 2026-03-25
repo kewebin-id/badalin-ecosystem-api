@@ -5,7 +5,7 @@ import { RolesGuard } from '@/shared/guards/roles.guard';
 import { Roles } from '@/shared/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { IDashboardUseCase, IHistoryResponse } from '../ports/i.usecase';
-import { EVisaRoutes } from '@/shared/constants/routes';
+import { EDashboardRoutes, EVisaRoutes } from '@/shared/constants/routes';
 import { response } from '@/shared/utils/rest-api/response';
 import { IUsecaseResponse, IUserContext, IPaginationResponse } from '@/shared/utils/rest-api/types';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
@@ -18,7 +18,7 @@ export class DashboardController {
     private readonly useCase: IDashboardUseCase,
   ) {}
 
-  @Get('/history')
+  @Get(EDashboardRoutes.HISTORY)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.PILGRIM)
   async getHistory(@UserContext() ctx: IUserContext, @Query() paginationDto: PaginationDto, @Res() res: Response) {

@@ -1,16 +1,18 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { VisaSubmissionModule } from './visa';
-import { AuthModule } from './visa/auth.module';
-import { PilgrimModule } from './visa/pilgrim.module';
-import { PaymentModule } from './visa/payment.module';
-import { DocumentModule } from './visa/document.module';
-import { DashboardModule } from './visa/dashboard.module';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { AgencyMiddleware } from '../shared/middleware/agency.middleware';
 import { ApiKeyGuard } from '../shared/guards/api-key.guard';
+import { AgencyMiddleware } from '../shared/middleware/agency.middleware';
+import { UploadModule } from './upload.module';
+import {
+  AuthModule,
+  DashboardModule,
+  DocumentModule,
+  PaymentModule,
+  PilgrimModule,
+  VisaSubmissionModule,
+} from './visa';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { ApiKeyGuard } from '../shared/guards/api-key.guard';
     PaymentModule,
     DocumentModule,
     DashboardModule,
+    UploadModule,
     ScheduleModule.forRoot(),
   ],
   providers: [
@@ -35,8 +38,6 @@ import { ApiKeyGuard } from '../shared/guards/api-key.guard';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AgencyMiddleware)
-      .forRoutes('*'); 
+    consumer.apply(AgencyMiddleware).forRoutes('*');
   }
 }

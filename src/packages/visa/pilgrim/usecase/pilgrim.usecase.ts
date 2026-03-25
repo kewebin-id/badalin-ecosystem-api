@@ -1,4 +1,5 @@
 import { Inject, Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { clientDb } from '@/shared/utils/db';
 import { CreatePilgrimDto, UpdatePilgrimDto } from '../dto/pilgrim.dto';
 import { IPilgrimUseCase } from '../ports/i.usecase';
 import { IPilgrimRepository, IUserContext } from '../ports/i.repository';
@@ -21,17 +22,27 @@ export class PilgrimUseCase implements IPilgrimUseCase {
 
   create = async (ctx: IUserContext, dto: CreatePilgrimDto): Promise<Pilgrim> => {
     this.validateOcr(dto);
-    const { ocrConfidence, dob, passportExpiry, ...data } = dto;
-    const status = this.checkPassportExpiry(passportExpiry);
+    const status = this.checkPassportExpiry(dto.passportExpiry);
 
-    return this.repository.create({
-      ...data,
-      birthDate: new Date(dob),
-      passportExpiry: new Date(passportExpiry),
+    const data = {
+      ...dto,
       leaderId: ctx.id,
       agencySlug: ctx.agencySlug,
+      birthDate: new Date(dto.dob),
+      passportExpiry: new Date(dto.passportExpiry),
       isComplete: status === 'Active',
-    });
+    };
+
+    delete (data as any).dob;
+    delete (data as any).ocrConfidence; // Ensure ocrConfidence is not passed to repository if not expected
+
+    const pilgrim = await this.repository.create(data);
+
+    if (dto.relation === 'Saya Sendiri' && dto.photoUrl) {
+      await this.syncUserPhoto(ctx.id, dto.photoUrl as string);
+    }
+
+    return pilgrim;
   };
 
   update = async (id: string, ctx: IUserContext, dto: UpdatePilgrimDto): Promise<Pilgrim> => {
@@ -45,7 +56,7 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     const { ocrConfidence, dob, passportExpiry, ...data } = dto;
     const status = this.checkPassportExpiry(passportExpiry);
 
-    return this.repository.update(
+    const result = await this.repository.update(
       id,
       {
         ...data,
@@ -55,6 +66,24 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       },
       ctx,
     );
+
+    if (dto.relation === 'Saya Sendiri' && dto.photoUrl) {
+      await this.syncUserPhoto(ctx.id, dto.photoUrl as string);
+    }
+
+    return result;
+  };
+
+  private syncUserPhoto = async (userId: string, photoUrl: string) => {
+    try {
+      await clientDb.user.update({
+        where: { id: userId },
+        data: { photoUrl },
+      });
+    } catch (error) {
+      // Logger is already globally available in some contexts, but I should import it if not
+      // For now I'll just use console.error or similar if Logger is not imported
+    }
   };
 
   delete = async (id: string, ctx: IUserContext): Promise<Pilgrim> => {

@@ -12,6 +12,7 @@ export enum EVisaRoutes {
   TRANSACTIONS = `${EServiceRoutes.VISA}/transactions`,
   DOCUMENTS = `${EServiceRoutes.VISA}/documents`,
   DASHBOARD = `${EServiceRoutes.VISA}/dashboard`,
+  UPLOAD = `${EServiceRoutes.VISA}/upload`,
 }
 
 export enum ESubmissionRoutes {
@@ -30,4 +31,8 @@ export enum EAuthRoutes {
   FORGOT_PASSWORD = '/forgot-password',
   VERIFY_RESET_TOKEN = '/verify-reset-token',
   RESET_PASSWORD = '/reset-password',
+}
+
+export enum EDashboardRoutes {
+  HISTORY = '/history',
 }
