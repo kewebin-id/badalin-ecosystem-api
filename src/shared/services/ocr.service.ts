@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as Tesseract from 'tesseract.js';
 import { createWorker } from 'tesseract.js';
 import { globalLogger as Logger } from '../utils/logger';
 
@@ -25,14 +26,24 @@ export interface OcrResult {
 
 @Injectable()
 export class OcrService {
-  async extractData(imageUrl: string, type: OcrType = 'PASSPORT'): Promise<OcrResult> {
+  async extractData(imageSource: string, type: OcrType = 'PASSPORT'): Promise<OcrResult> {
+    let worker: Tesseract.Worker | undefined;
     try {
       Logger.debug(`Starting real OCR extraction for type: ${type}`, 'OcrService');
 
-      const worker = await createWorker('ind+eng');
-      const { data } = await worker.recognize(imageUrl);
-      await worker.terminate();
+      let imageBuffer: Buffer | string = imageSource;
+      if (imageSource.startsWith('data:')) {
+        const base64Data = imageSource.split(';base64,').pop();
+        if (base64Data) {
+          imageBuffer = Buffer.from(base64Data, 'base64');
+          Logger.debug('Base64 image converted to Buffer', 'OcrService');
+        }
+      }
 
+      worker = await createWorker('ind+eng');
+      
+      const { data } = await worker.recognize(imageBuffer);
+      
       const text = data.text;
       const confidence = data.confidence;
 
@@ -47,11 +58,21 @@ export class OcrService {
       return this.parseLogistics(text, confidence);
     } catch (error) {
       Logger.error(
-        error instanceof Error ? error.message : 'Error in OCR extraction',
+        `OCR extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         error instanceof Error ? error.stack : undefined,
-        'OcrService.extractText',
+        'OcrService.extractData',
       );
-      throw error;
+      
+      return {
+        fullName: 'FAILED_TO_EXTRACT',
+        rawText: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        confidence: 0,
+      };
+    } finally {
+      if (worker) {
+        await worker.terminate();
+        Logger.debug('OCR Worker terminated', 'OcrService');
+      }
     }
   }
 
