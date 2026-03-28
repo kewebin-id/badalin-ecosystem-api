@@ -1,5 +1,5 @@
 import { clientDb } from '@/shared/utils/db';
-import { Pilgrim, UserRole } from '@prisma/client';
+import { Pilgrim, UserRole, Prisma } from '@prisma/client';
 import { IPilgrimRepository, IUserContext } from '../ports/i.repository';
 
 export class PrismaPilgrimRepository implements IPilgrimRepository {
@@ -31,12 +31,11 @@ export class PrismaPilgrimRepository implements IPilgrimRepository {
     });
   };
 
-  create = async (data: any): Promise<Pilgrim> => {
+  create = async (data: Prisma.PilgrimUncheckedCreateInput): Promise<Pilgrim> => {
     return this.db.pilgrim.create({ data });
   };
 
-  update = async (id: string, data: any, ctx: IUserContext): Promise<Pilgrim> => {
-    const filter = this.getQueryFilter(ctx);
+  update = async (id: string, data: Prisma.PilgrimUncheckedUpdateInput, ctx: IUserContext): Promise<Pilgrim> => {
     const exists = await this.findById(id, ctx);
     if (!exists) throw new Error('Pilgrim not found or access denied');
 
