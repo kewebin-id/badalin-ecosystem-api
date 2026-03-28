@@ -12,7 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const uploadFile = async (
   fileOrBase64: string,
-  bucket: string = process.env.SUPABASE_BUCKET || 'insights',
+  bucket: string = process.env.SUPABASE_BUCKET || 'jamaah-docs',
   fileName?: string,
 ) => {
   try {
