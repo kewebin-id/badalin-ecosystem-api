@@ -1,4 +1,4 @@
-import { Pilgrim } from '@prisma/client';
+import { Pilgrim, Prisma } from '@prisma/client';
 
 export interface IUserContext {
   id: string;
@@ -9,7 +9,7 @@ export interface IUserContext {
 export interface IPilgrimRepository {
   findAll: (ctx: IUserContext, skip?: number, take?: number) => Promise<{ count: number; rows: Pilgrim[] }>;
   findById: (id: string, ctx: IUserContext) => Promise<Pilgrim | null>;
-  create: (data: any) => Promise<Pilgrim>;
-  update: (id: string, data: any, ctx: IUserContext) => Promise<Pilgrim>;
+  create: (data: Prisma.PilgrimUncheckedCreateInput) => Promise<Pilgrim>;
+  update: (id: string, data: Prisma.PilgrimUncheckedUpdateInput, ctx: IUserContext) => Promise<Pilgrim>;
   delete: (id: string, ctx: IUserContext) => Promise<Pilgrim>;
 }

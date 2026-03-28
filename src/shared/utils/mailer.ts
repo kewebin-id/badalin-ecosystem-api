@@ -73,10 +73,10 @@ export const sendAccountActiveEmail = async (email: string, name: string) => {
     Logger.info('Account activation email sent successfully', `Email: ${email}`);
 
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     Logger.error(
       `Failed to send account activation email to ${email}`,
-      error.message,
+      error instanceof Error ? error.message : 'Unknown error',
       'shared/utils/mailer.ts - sendAccountActiveEmail',
     );
     return false;
@@ -155,10 +155,10 @@ export const sendResetPasswordEmail = async (email: string, resetLink: string) =
     Logger.info('Password reset email sent successfully', `Email: ${email}`);
 
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     Logger.error(
       `Failed to send password reset email to ${email}`,
-      error.message,
+      error instanceof Error ? error.message : 'Unknown error',
       'shared/utils/mailer.ts - sendResetPasswordEmail',
     );
     return false;

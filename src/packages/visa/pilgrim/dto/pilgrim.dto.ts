@@ -45,6 +45,10 @@ export class CreatePilgrimDto {
 
   @IsString()
   @IsOptional()
+  selfieUrl?: string;
+
+  @IsString()
+  @IsOptional()
   ktpUrl?: string;
 
   @IsString()

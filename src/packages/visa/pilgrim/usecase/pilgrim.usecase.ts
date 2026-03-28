@@ -24,22 +24,20 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     this.validateOcr(dto);
     const status = this.checkPassportExpiry(dto.passportExpiry);
 
-    const data = {
-      ...dto,
+    const { dob, selfieUrl, ocrConfidence, ...dtoData } = dto;
+
+    const pilgrim = await this.repository.create({
+      ...dtoData,
       leaderId: ctx.id,
       agencySlug: ctx.agencySlug,
-      birthDate: new Date(dto.dob),
+      birthDate: new Date(dob),
       passportExpiry: new Date(dto.passportExpiry),
       isComplete: status === 'Active',
-    };
+      photoUrl: dto.photoUrl || selfieUrl,
+    });
 
-    delete (data as any).dob;
-    delete (data as any).ocrConfidence; // Ensure ocrConfidence is not passed to repository if not expected
-
-    const pilgrim = await this.repository.create(data);
-
-    if (dto.relation === 'Saya Sendiri' && dto.photoUrl) {
-      await this.syncUserPhoto(ctx.id, dto.photoUrl as string);
+    if (dto.relation === 'Saya Sendiri' && (dto.photoUrl || selfieUrl)) {
+      await this.syncUserPhoto(ctx.id, (dto.photoUrl || selfieUrl) as string);
     }
 
     return pilgrim;
@@ -53,13 +51,16 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     }
 
     this.validateOcr(dto);
-    const { ocrConfidence, dob, passportExpiry, ...data } = dto;
+    const { ocrConfidence, dob, passportExpiry, selfieUrl, ...dtoData } = dto;
     const status = this.checkPassportExpiry(passportExpiry);
+
+    const photoUrl = dto.photoUrl || selfieUrl;
 
     const result = await this.repository.update(
       id,
       {
-        ...data,
+        ...dtoData,
+        photoUrl,
         birthDate: new Date(dob),
         passportExpiry: new Date(passportExpiry),
         isComplete: status === 'Active',
@@ -67,8 +68,8 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       ctx,
     );
 
-    if (dto.relation === 'Saya Sendiri' && dto.photoUrl) {
-      await this.syncUserPhoto(ctx.id, dto.photoUrl as string);
+    if (dto.relation === 'Saya Sendiri' && photoUrl) {
+      await this.syncUserPhoto(ctx.id, photoUrl as string);
     }
 
     return result;
@@ -81,8 +82,6 @@ export class PilgrimUseCase implements IPilgrimUseCase {
         data: { photoUrl },
       });
     } catch (error) {
-      // Logger is already globally available in some contexts, but I should import it if not
-      // For now I'll just use console.error or similar if Logger is not imported
     }
   };
 
