@@ -1,4 +1,4 @@
-import { Inject, Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { clientDb } from '@/shared/utils/db';
 import { CreatePilgrimDto, UpdatePilgrimDto } from '../dto/pilgrim.dto';
 import { IPilgrimUseCase } from '../ports/i.usecase';
@@ -20,8 +20,8 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     return pagination.paginate(result);
   };
 
-  create = async (ctx: IUserContext, dto: CreatePilgrimDto): Promise<Pilgrim> => {
-    this.validateOcr(dto);
+  create = async (ctx: IUserContext, dto: CreatePilgrimDto): Promise<{ data: Pilgrim; message?: string }> => {
+    const ocrWarning = this.validateOcr(dto);
     const status = this.checkPassportExpiry(dto.passportExpiry);
 
     const { dob, selfieUrl, ocrConfidence, ...dtoData } = dto;
@@ -40,17 +40,20 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       await this.syncUserPhoto(ctx.id, (dto.photoUrl || selfieUrl) as string);
     }
 
-    return pilgrim;
+    return { 
+      data: pilgrim, 
+      message: ocrWarning || undefined 
+    };
   };
 
-  update = async (id: string, ctx: IUserContext, dto: UpdatePilgrimDto): Promise<Pilgrim> => {
+  update = async (id: string, ctx: IUserContext, dto: UpdatePilgrimDto): Promise<{ data: Pilgrim; message?: string }> => {
     const pilgrim = await this.repository.findById(id, ctx);
 
     if (!pilgrim) {
       throw new NotFoundException('Pilgrim not found or access denied');
     }
 
-    this.validateOcr(dto);
+    const ocrWarning = this.validateOcr(dto);
     const { ocrConfidence, dob, passportExpiry, selfieUrl, ...dtoData } = dto;
     const status = this.checkPassportExpiry(passportExpiry);
 
@@ -72,7 +75,10 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       await this.syncUserPhoto(ctx.id, photoUrl as string);
     }
 
-    return result;
+    return { 
+      data: result, 
+      message: ocrWarning || undefined 
+    };
   };
 
   private syncUserPhoto = async (userId: string, photoUrl: string) => {
@@ -95,10 +101,11 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     return this.repository.delete(id, ctx);
   };
 
-  private validateOcr = (dto: CreatePilgrimDto | UpdatePilgrimDto) => {
+  private validateOcr = (dto: CreatePilgrimDto | UpdatePilgrimDto): string | null => {
     if (dto.ocrConfidence !== undefined && dto.ocrConfidence < 70) {
-      throw new BadRequestException('OCR confidence too low. Please input data manually.');
+      return 'Dokumen berhasil diproses, namun kualitas scan kurang jelas. Mohon pastikan data sudah benar.';
     }
+    return null;
   };
 
   private checkPassportExpiry = (expiryDate: string): 'Active' | 'Non-Aktif' => {
