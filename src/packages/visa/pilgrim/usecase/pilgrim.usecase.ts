@@ -46,6 +46,10 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     };
   };
 
+  findById = async (id: string, ctx: IUserContext): Promise<Pilgrim | null> => {
+    return this.repository.findById(id, ctx);
+  };
+
   update = async (id: string, ctx: IUserContext, dto: UpdatePilgrimDto): Promise<{ data: Pilgrim; message?: string }> => {
     const pilgrim = await this.repository.findById(id, ctx);
 
