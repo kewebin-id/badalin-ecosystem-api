@@ -47,6 +47,27 @@ export class PilgrimController {
     }
   }
 
+  @Get(':id')
+  async findById(@Param('id') id: string, @UserContext() ctx: IUserContext, @Res() res: Response) {
+    try {
+      const pilgrim = await this.pilgrimUseCase.findById(id, ctx);
+      if (!pilgrim) {
+        return response[HttpStatus.NOT_FOUND](res, {
+          message: 'Pilgrim not found',
+        });
+      }
+      return response[HttpStatus.OK](res, {
+        message: 'Success fetch pilgrim detail',
+        data: pilgrim,
+      });
+    } catch (error) {
+      Logger.error(error instanceof Error ? error.message : 'Error fetching pilgrim detail');
+      return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
+        message: 'Failed to fetch pilgrim detail',
+      });
+    }
+  }
+
   @Post()
   async create(@Body() dto: CreatePilgrimDto, @UserContext() ctx: IUserContext, @Res() res: Response) {
     try {
