@@ -50,10 +50,10 @@ export class PilgrimController {
   @Post()
   async create(@Body() dto: CreatePilgrimDto, @UserContext() ctx: IUserContext, @Res() res: Response) {
     try {
-      const pilgrim = await this.pilgrimUseCase.create(ctx, dto);
+      const { data, message } = await this.pilgrimUseCase.create(ctx, dto);
       return response[HttpStatus.CREATED](res, {
-        message: validationMessage('Pilgrim')[201](),
-        data: pilgrim,
+        message: message || validationMessage('Pilgrim')[201](),
+        data,
       });
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : 'Error creating pilgrim');
@@ -71,10 +71,10 @@ export class PilgrimController {
     @Res() res: Response,
   ) {
     try {
-      const pilgrim = await this.pilgrimUseCase.update(id, ctx, dto);
+      const { data, message } = await this.pilgrimUseCase.update(id, ctx, dto);
       return response[HttpStatus.OK](res, {
-        message: 'Pilgrim updated successfully',
-        data: pilgrim,
+        message: message || 'Pilgrim updated successfully',
+        data,
       });
     } catch (error) {
       Logger.error(error instanceof Error ? error.message : 'Error updating pilgrim');
