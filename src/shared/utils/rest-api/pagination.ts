@@ -13,6 +13,10 @@ export class PaginationDto {
   @IsNumber()
   @Min(1)
   limit?: number = 10;
+
+  @IsOptional()
+  @Type(() => String)
+  search?: string;
 }
 
 interface PaginationInterface<T> {
