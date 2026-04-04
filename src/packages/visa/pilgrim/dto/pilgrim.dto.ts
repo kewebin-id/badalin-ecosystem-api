@@ -27,8 +27,8 @@ export class CreatePilgrimDto {
   gender: string;
 
   @IsString()
-  @IsOptional()
-  maritalStatus?: string;
+  @IsNotEmpty()
+  maritalStatus: string;
 
   @IsEnum(PilgrimRelation)
   @IsNotEmpty()
@@ -41,20 +41,20 @@ export class CreatePilgrimDto {
   ocrConfidence?: number;
 
   @IsString()
-  @IsOptional()
-  photoUrl?: string;
+  @IsNotEmpty()
+  photoUrl: string;
 
   @IsString()
   @IsOptional()
   selfieUrl?: string;
 
   @IsString()
-  @IsOptional()
-  ktpUrl?: string;
+  @IsNotEmpty()
+  ktpUrl: string;
 
   @IsString()
-  @IsOptional()
-  passportUrl?: string;
+  @IsNotEmpty()
+  passportUrl: string;
 }
 
 export class UpdatePilgrimDto extends CreatePilgrimDto {}
