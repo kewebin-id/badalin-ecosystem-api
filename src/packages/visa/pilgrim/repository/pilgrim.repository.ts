@@ -11,8 +11,18 @@ export class PrismaPilgrimRepository implements IPilgrimRepository {
     return { leaderId: ctx.id, agencySlug: ctx.agencySlug };
   }
 
-  findAll = async (ctx: IUserContext, skip: number = 0, take: number = 10): Promise<{ count: number; rows: Pilgrim[] }> => {
-    const where = this.getQueryFilter(ctx);
+  findAll = async (ctx: IUserContext, skip: number = 0, take: number = 10, search?: string): Promise<{ count: number; rows: Pilgrim[] }> => {
+    const where: Prisma.PilgrimWhereInput = {
+      ...this.getQueryFilter(ctx),
+      ...(search && {
+        OR: [
+          { fullName: { contains: search, mode: 'insensitive' } },
+          { passportNumber: { contains: search, mode: 'insensitive' } },
+          { nik: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
     const [count, rows] = await this.db.$transaction([
       this.db.pilgrim.count({ where }),
       this.db.pilgrim.findMany({

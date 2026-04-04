@@ -16,7 +16,7 @@ export class PilgrimUseCase implements IPilgrimUseCase {
 
   findAll = async (ctx: IUserContext, paginationDto: PaginationDto): Promise<IPaginationResponse<Pilgrim>> => {
     const pagination = new Pagination(paginationDto.page, paginationDto.limit);
-    const result = await this.repository.findAll(ctx, pagination.offset, pagination.limit);
+    const result = await this.repository.findAll(ctx, pagination.offset, pagination.limit, paginationDto.search);
     return pagination.paginate(result);
   };
 
