@@ -3,7 +3,7 @@ import { clientDb } from '@/shared/utils/db';
 import { CreatePilgrimDto, UpdatePilgrimDto } from '../dto/pilgrim.dto';
 import { IPilgrimUseCase } from '../ports/i.usecase';
 import { IPilgrimRepository, IUserContext } from '../ports/i.repository';
-import { Pilgrim } from '@prisma/client';
+import { Pilgrim, PilgrimRelation } from '@prisma/client';
 import { Pagination, PaginationDto } from '@/shared/utils/rest-api/pagination';
 import { IPaginationResponse } from '@/shared/utils/rest-api/types';
 
@@ -36,7 +36,7 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       photoUrl: dto.photoUrl || selfieUrl,
     });
 
-    if (dto.relation === 'Saya Sendiri' && (dto.photoUrl || selfieUrl)) {
+    if (dto.relation === PilgrimRelation.SELF && (dto.photoUrl || selfieUrl)) {
       await this.syncUserPhoto(ctx.id, (dto.photoUrl || selfieUrl) as string);
     }
 
@@ -75,7 +75,7 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       ctx,
     );
 
-    if (dto.relation === 'Saya Sendiri' && photoUrl) {
+    if (dto.relation === PilgrimRelation.SELF && photoUrl) {
       await this.syncUserPhoto(ctx.id, photoUrl as string);
     }
 
