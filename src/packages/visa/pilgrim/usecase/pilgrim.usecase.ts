@@ -33,11 +33,12 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       birthDate: new Date(dob),
       passportExpiry: new Date(dto.passportExpiry),
       isComplete: status === 'Active',
-      photoUrl: dto.photoUrl || selfieUrl,
+      photoUrl: dto.photoUrl || selfieUrl || '',
     });
 
-    if (dto.relation === PilgrimRelation.SELF && (dto.photoUrl || selfieUrl)) {
-      await this.syncUserPhoto(ctx.id, (dto.photoUrl || selfieUrl) as string);
+    const finalPhotoUrl = dto.photoUrl || selfieUrl;
+    if (dto.relation === PilgrimRelation.SELF && finalPhotoUrl) {
+      await this.syncUserPhoto(ctx.id, finalPhotoUrl);
     }
 
     return { 
@@ -61,13 +62,13 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     const { ocrConfidence, dob, passportExpiry, selfieUrl, ...dtoData } = dto;
     const status = this.checkPassportExpiry(passportExpiry);
 
-    const photoUrl = dto.photoUrl || selfieUrl;
+    const finalPhotoUrl = dto.photoUrl || selfieUrl || '';
 
     const result = await this.repository.update(
       id,
       {
         ...dtoData,
-        photoUrl,
+        photoUrl: finalPhotoUrl,
         birthDate: new Date(dob),
         passportExpiry: new Date(passportExpiry),
         isComplete: status === 'Active',
@@ -75,8 +76,8 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       ctx,
     );
 
-    if (dto.relation === PilgrimRelation.SELF && photoUrl) {
-      await this.syncUserPhoto(ctx.id, photoUrl as string);
+    if (dto.relation === PilgrimRelation.SELF && finalPhotoUrl) {
+      await this.syncUserPhoto(ctx.id, finalPhotoUrl);
     }
 
     return { 
