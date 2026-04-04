@@ -25,6 +25,15 @@ enum PaymentStatus {
   COMPLETED
 }
 
+enum PilgrimRelation {
+  SELF
+  SPOUSE
+  FATHER
+  MOTHER
+  CHILD
+  SIBLING
+}
+
 model Agency {
   id                String           @id @default(uuid())
   name              String
@@ -83,7 +92,7 @@ model Pilgrim {
   birthDate      DateTime         @map("birth_date")
   gender         String
   maritalStatus  String?          @map("marital_status")
-  relation       String?          @map("relation")
+  relation       PilgrimRelation? @default(SELF) @map("relation")
   nik            String?          @map("nik")
   uniformSize    String?          @map("uniform_size")
   isComplete     Boolean          @default(false) @map("is_complete")

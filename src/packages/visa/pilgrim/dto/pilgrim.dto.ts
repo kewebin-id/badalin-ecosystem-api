@@ -1,3 +1,4 @@
+import { PilgrimRelation } from '@prisma/client';
 import { IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreatePilgrimDto {
@@ -29,9 +30,9 @@ export class CreatePilgrimDto {
   @IsOptional()
   maritalStatus?: string;
 
-  @IsString()
+  @IsEnum(PilgrimRelation)
   @IsNotEmpty()
-  relation: string;
+  relation: PilgrimRelation;
 
   @IsNumber()
   @IsOptional()
