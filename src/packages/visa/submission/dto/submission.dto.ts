@@ -1,40 +1,8 @@
-import { IsArray, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { RoomType } from '@prisma/client';
+import { IsArray, IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { RoomType, TransportType, HotelCity } from '@prisma/client';
 
-export class CreateVisaSubmissionDto {
-  @IsString()
-  @IsNotEmpty()
-  agencySlug: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty()
-  pilgrimIds: string[];
-
-  @IsDateString()
-  @IsNotEmpty()
-  flightEta: string;
-
-  @IsDateString()
-  @IsNotEmpty()
-  flightEtd: string;
-
-  @IsDateString()
-  @IsNotEmpty()
-  hotelCheckin: string;
-
-  @IsDateString()
-  @IsNotEmpty()
-  hotelCheckout: string;
-
-  @IsString()
-  @IsNotEmpty()
-  transportType: string;
-
-  @IsString()
-  @IsNotEmpty()
-  tripRoute: string;
-
+export class FlightManifestDto {
   @IsString()
   @IsNotEmpty()
   flightNo: string;
@@ -47,57 +15,84 @@ export class CreateVisaSubmissionDto {
   @IsNotEmpty()
   flightDate: string;
 
+  @IsDateString()
+  @IsOptional()
+  eta?: string;
+
+  @IsDateString()
+  @IsOptional()
+  etd?: string;
+}
+
+export class HotelManifestDto {
   @IsString()
   @IsNotEmpty()
-  hotelMakkahName: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()
-  hotelMadinahName: string;
+  resvNo: string;
 
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  hotelMakkahResvNo: string;
+  checkIn: string;
 
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  hotelMadinahResvNo: string;
+  checkOut: string;
+
+  @IsEnum(HotelCity)
+  @IsNotEmpty()
+  city: HotelCity;
 
   @IsEnum(RoomType)
   @IsNotEmpty()
   roomType: RoomType;
+}
+
+export class TransportationManifestDto {
+  @IsEnum(TransportType)
+  @IsNotEmpty()
+  type: TransportType;
 
   @IsString()
   @IsNotEmpty()
-  busCompany: string;
+  company: string;
 
   @IsString()
   @IsNotEmpty()
-  busTime: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  totalBus: number;
+  time: string;
 
   @IsDateString()
   @IsNotEmpty()
-  trainDate: string;
+  date: string;
 
   @IsString()
-  @IsNotEmpty()
-  trainFrom: string;
+  @IsOptional()
+  from?: string;
 
   @IsString()
-  @IsNotEmpty()
-  trainTo: string;
+  @IsOptional()
+  to?: string;
 
+  @IsInt()
+  @IsNotEmpty()
+  totalVehicle: number;
+
+  @IsInt()
+  @IsOptional()
+  totalH?: number;
+}
+
+export class CreateVisaSubmissionDto {
   @IsString()
   @IsNotEmpty()
-  trainTime: string;
+  agencySlug: string;
 
-  @IsNumber()
+  @IsArray()
+  @IsString({ each: true })
   @IsNotEmpty()
-  trainTotalH: number;
+  pilgrimIds: string[];
 
   @IsString()
   @IsNotEmpty()
@@ -106,6 +101,21 @@ export class CreateVisaSubmissionDto {
   @IsString()
   @IsNotEmpty()
   rawdahWomenTime: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FlightManifestDto)
+  flights: FlightManifestDto[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => HotelManifestDto)
+  hotels: HotelManifestDto[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TransportationManifestDto)
+  transportations: TransportationManifestDto[];
 }
 
 export class UpdateVisaSubmissionDto extends CreateVisaSubmissionDto {}

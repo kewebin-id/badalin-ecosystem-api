@@ -30,13 +30,19 @@ export class DashboardUseCase implements IDashboardUseCase {
 
       Logger.debug(`Found ${submissions.length} submissions out of ${count}`, 'DashboardUseCase');
 
-      const mappedRows: IHistoryResponse[] = submissions.map((sub) => ({
-        transaction_id: sub.id,
-        flight_route: sub.tripRoute || '-',
-        destination_date: sub.flightEtd ? sub.flightEtd.toISOString() : '-',
-        total_amount: Number(sub.totalAmount),
-        status: sub.status,
-      }));
+      const mappedRows: IHistoryResponse[] = submissions.map((sub) => {
+        const firstFlight = sub.flights?.[0];
+        const lastFlight = sub.flights?.[sub.flights.length - 1];
+        const firstTransport = sub.transportations?.[0];
+
+        return {
+          transaction_id: sub.id,
+          flight_route: firstTransport ? `${firstTransport.from || ''} - ${firstTransport.to || ''}` : firstFlight?.carrier || '-',
+          destination_date: lastFlight?.etd ? lastFlight.etd.toISOString() : lastFlight?.flightDate.toISOString() || '-',
+          total_amount: Number(sub.totalAmount),
+          status: sub.status,
+        };
+      });
 
       const paginatedData = pagination.paginate({ count, rows: mappedRows });
 

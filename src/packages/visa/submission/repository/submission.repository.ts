@@ -24,36 +24,51 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
         status: data.status || VerifyStatus.IN_REVIEW,
         verifyStatus: data.verifyStatus || VerifyStatus.IN_REVIEW,
         paymentStatus: data.paymentStatus || PaymentStatus.PENDING,
-        flightEta: data.flightEta,
-        flightEtd: data.flightEtd,
-        hotelCheckin: data.hotelCheckin,
-        hotelCheckout: data.hotelCheckout,
-        transportType: data.transportType,
-        tripRoute: data.tripRoute,
-        flightNo: data.flightNo!,
-        carrier: data.carrier!,
-        flightDate: data.flightDate!,
-        hotelMakkahName: data.hotelMakkahName!,
-        hotelMadinahName: data.hotelMadinahName!,
-        hotelMakkahResvNo: data.hotelMakkahResvNo!,
-        hotelMadinahResvNo: data.hotelMadinahResvNo!,
-        roomType: data.roomType as Exclude<typeof data.roomType, undefined>,
-        busCompany: data.busCompany!,
-        busTime: data.busTime!,
-        totalBus: data.totalBus!,
-        trainDate: data.trainDate!,
-        trainFrom: data.trainFrom!,
-        trainTo: data.trainTo!,
-        trainTime: data.trainTime!,
-        trainTotalH: data.trainTotalH!,
         rawdahMenTime: data.rawdahMenTime!,
         rawdahWomenTime: data.rawdahWomenTime!,
         members: {
           connect: memberIds.map((id) => ({ id })),
         },
+        flights: {
+          create: data.flights?.map((f) => ({
+            flightNo: f.flightNo,
+            carrier: f.carrier,
+            flightDate: f.flightDate,
+            eta: f.eta,
+            etd: f.etd,
+            createdBy: data.createdBy!,
+          })),
+        },
+        hotels: {
+          create: data.hotels?.map((h) => ({
+            name: h.name,
+            resvNo: h.resvNo,
+            checkIn: h.checkIn,
+            checkOut: h.checkOut,
+            city: h.city,
+            roomType: h.roomType,
+            createdBy: data.createdBy!,
+          })),
+        },
+        transportations: {
+          create: data.transportations?.map((t) => ({
+            type: t.type,
+            company: t.company,
+            time: t.time,
+            date: t.date,
+            from: t.from,
+            to: t.to,
+            totalVehicle: t.totalVehicle,
+            totalH: t.totalH,
+            createdBy: data.createdBy!,
+          })),
+        },
       },
       include: {
         members: true,
+        flights: true,
+        hotels: true,
+        transportations: true,
       },
     });
 
@@ -66,7 +81,12 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
   async findById(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity | null> {
     const submission = await this.db.visaSubmission.findFirst({
       where: { id, ...this.getQueryFilter(ctx) },
-      include: { members: true },
+      include: {
+        members: true,
+        flights: true,
+        hotels: true,
+        transportations: true,
+      },
     });
 
     if (!submission) return null;
