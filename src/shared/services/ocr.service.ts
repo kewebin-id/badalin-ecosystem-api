@@ -3,7 +3,14 @@ import * as Tesseract from 'tesseract.js';
 import { createWorker } from 'tesseract.js';
 import { globalLogger as Logger } from '../utils/logger';
 
-export type OcrType = 'PASSPORT' | 'KTP' | 'LOGISTICS';
+export type OcrType =
+  | 'PASSPORT'
+  | 'KTP'
+  | 'LOGISTICS'
+  | 'DEPARTURE_TICKET'
+  | 'RETURN_TICKET'
+  | 'HOTEL_MECCA'
+  | 'HOTEL_MEDINA';
 
 export interface OcrResult {
   fullName: string;
@@ -41,9 +48,9 @@ export class OcrService {
       }
 
       worker = await createWorker('ind+eng');
-      
+
       const { data } = await worker.recognize(imageBuffer);
-      
+
       const text = data.text;
       const confidence = data.confidence;
 
@@ -62,7 +69,7 @@ export class OcrService {
         error instanceof Error ? error.stack : undefined,
         'OcrService.extractData',
       );
-      
+
       return {
         fullName: 'FAILED_TO_EXTRACT',
         rawText: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
