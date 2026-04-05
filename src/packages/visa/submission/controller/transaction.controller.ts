@@ -4,7 +4,7 @@ import { response } from '@/shared/utils/rest-api/response';
 import { Body, Controller, HttpStatus, Inject, Logger, Param, Post, Res, UseGuards } from '@nestjs/common';
 import { PaymentStatus } from '@prisma/client';
 import { Response } from 'express';
-import { SubmitVisaDto } from '../dto/submission.dto';
+import { CreateVisaSubmissionDto } from '../dto/submission.dto';
 import { IVisaSubmissionRepository, IVisaSubmissionUseCase } from '../ports';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { IUserContext } from '@/shared/utils/rest-api/types';
@@ -23,7 +23,7 @@ export class TransactionController implements VisaSubmissionTransactionControlle
 
   @Post()
   async create(
-    @Body() dto: SubmitVisaDto,
+    @Body() dto: CreateVisaSubmissionDto,
     @UserContext() ctx: IUserContext,
     @Res() res: Response,
   ): Promise<Response> {

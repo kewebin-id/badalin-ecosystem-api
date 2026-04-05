@@ -1,4 +1,4 @@
-import { PaymentStatus, VerifyStatus, Prisma } from '@prisma/client';
+import { PaymentStatus, VerifyStatus, Prisma, RoomType } from '@prisma/client';
 
 export class VisaSubmissionEntity {
   id: string;
@@ -22,6 +22,25 @@ export class VisaSubmissionEntity {
   hotelCheckout?: Date | null;
   transportType?: string | null;
   tripRoute?: string | null;
+
+  flightNo: string;
+  carrier: string;
+  flightDate: Date;
+  hotelMakkahName: string;
+  hotelMadinahName: string;
+  hotelMakkahResvNo: string;
+  hotelMadinahResvNo: string;
+  roomType: RoomType;
+  busCompany: string;
+  busTime: string;
+  totalBus: number;
+  trainDate: Date;
+  trainFrom: string;
+  trainTo: string;
+  trainTime: string;
+  trainTotalH: number;
+  rawdahMenTime: string;
+  rawdahWomenTime: string;
   createdAt: Date;
   createdBy: string;
   updatedAt: Date;

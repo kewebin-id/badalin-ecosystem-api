@@ -2,7 +2,7 @@ import { EServiceRoutes, ESubmissionRoutes, validationMessage } from '@/shared/c
 import { response } from '@/shared/utils/rest-api/response';
 import { Body, Controller, HttpStatus, Inject, Logger, Post, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
-import { SubmitVisaDto } from '../dto/submission.dto';
+import { CreateVisaSubmissionDto } from '../dto/submission.dto';
 import { VisaSubmissionControllerPort } from '../ports/i.controller';
 import { IVisaSubmissionUseCase } from '../ports/i.usecase';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
@@ -19,7 +19,7 @@ export class VisaSubmissionController implements VisaSubmissionControllerPort {
 
   @Post(ESubmissionRoutes.SUBMIT)
   async create(
-    @Body() dto: SubmitVisaDto,
+    @Body() dto: CreateVisaSubmissionDto,
     @UserContext() ctx: IUserContext,
     @Res() res: Response,
   ): Promise<Response> {
