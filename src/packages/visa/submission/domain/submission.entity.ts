@@ -1,13 +1,14 @@
-import { PaymentStatus, VerifyStatus, Prisma, RoomType, TransportType, HotelCity } from '@prisma/client';
+import { PaymentStatus, VerifyStatus, Prisma, RoomType, TransportType, HotelCity, FlightType } from '@prisma/client';
 
 export class FlightManifestEntity {
   id?: string;
   submissionId?: string;
+  type: FlightType;
   flightNo: string;
   carrier: string;
   flightDate: Date;
-  eta?: Date | null;
-  etd?: Date | null;
+  eta: Date;
+  etd: Date;
   createdAt?: Date;
   createdBy: string;
   updatedAt?: Date;

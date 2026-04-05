@@ -31,6 +31,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
         },
         flights: {
           create: data.flights?.map((f) => ({
+            type: f.type,
             flightNo: f.flightNo,
             carrier: f.carrier,
             flightDate: f.flightDate,
