@@ -42,11 +42,12 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
         rawdahMenTime: dto.rawdahMenTime,
         rawdahWomenTime: dto.rawdahWomenTime,
         flights: dto.flights.map((f) => ({
+          type: f.type,
           flightNo: f.flightNo,
           carrier: f.carrier,
           flightDate: new Date(f.flightDate),
-          eta: f.eta ? new Date(f.eta) : null,
-          etd: f.etd ? new Date(f.etd) : null,
+          eta: new Date(f.eta),
+          etd: new Date(f.etd),
           createdBy: ctx.id,
         })),
         hotels: dto.hotels.map((h) => ({

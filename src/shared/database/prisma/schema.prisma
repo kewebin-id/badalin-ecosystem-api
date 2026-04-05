@@ -56,6 +56,12 @@ enum HotelCity {
   CITY_OTHER
 }
 
+enum FlightType {
+  DEPARTURE
+  RETURN
+  OTHER
+}
+
 model Agency {
   id                String           @id @default(uuid())
   name              String
@@ -73,7 +79,6 @@ model Agency {
   deletedBy         String?          @map("deleted_by")
   users             User[]
   pilgrims          Pilgrim[]
-  manifests         Manifest[]
   visaSubmissions   VisaSubmission[] @relation("AgencySubmissions")
 
   @@map("agencies")
@@ -170,36 +175,15 @@ model VisaSubmission {
   @@map("visa_submissions")
 }
 
-model Manifest {
-  id              String    @id @default(uuid())
-  agencySlug      String    @map("agency_slug")
-  flightNumber    String    @map("flight_number")
-  carrier         String
-  departureDate   DateTime  @map("departure_date")
-  arrivalDate     DateTime  @map("arrival_date")
-  hotelMakkah     String    @map("hotel_makkah")
-  hotelMadinah    String    @map("hotel_madinah")
-  rawdahMenDate   DateTime? @map("rawdah_men_date")
-  rawdahWomenDate DateTime? @map("rawdah_women_date")
-  agency          Agency    @relation(fields: [agencySlug], references: [slug])
-  createdAt       DateTime  @default(now()) @map("created_at")
-  createdBy       String?   @map("created_by")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  updatedBy       String?   @map("updated_by")
-  deletedAt       DateTime? @map("deleted_at")
-  deletedBy       String?   @map("deleted_by")
-
-  @@map("manifests")
-}
-
 model FlightManifest {
   id           String         @id @default(uuid())
   submissionId String         @map("submission_id")
+  type         FlightType     @default(DEPARTURE)
   flightNo     String         @map("flight_no")
   carrier      String
   flightDate   DateTime       @map("flight_date")
-  eta          DateTime?      @map("eta")
-  etd          DateTime?      @map("etd")
+  eta          DateTime       @map("eta")
+  etd          DateTime       @map("etd")
   submission   VisaSubmission @relation(fields: [submissionId], references: [id])
   createdAt    DateTime       @default(now()) @map("created_at")
   createdBy    String         @map("created_by")

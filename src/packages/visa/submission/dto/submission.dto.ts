@@ -1,8 +1,12 @@
 import { IsArray, IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { RoomType, TransportType, HotelCity } from '@prisma/client';
+import { RoomType, TransportType, HotelCity, FlightType } from '@prisma/client';
 
 export class FlightManifestDto {
+  @IsEnum(FlightType)
+  @IsNotEmpty()
+  type: FlightType;
+
   @IsString()
   @IsNotEmpty()
   flightNo: string;
@@ -16,12 +20,12 @@ export class FlightManifestDto {
   flightDate: string;
 
   @IsDateString()
-  @IsOptional()
-  eta?: string;
+  @IsNotEmpty()
+  eta: string;
 
   @IsDateString()
-  @IsOptional()
-  etd?: string;
+  @IsNotEmpty()
+  etd: string;
 }
 
 export class HotelManifestDto {
