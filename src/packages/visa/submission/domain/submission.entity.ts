@@ -1,4 +1,68 @@
-import { PaymentStatus, VerifyStatus, Prisma, RoomType } from '@prisma/client';
+import { PaymentStatus, VerifyStatus, Prisma, RoomType, TransportType, HotelCity } from '@prisma/client';
+
+export class FlightManifestEntity {
+  id?: string;
+  submissionId?: string;
+  flightNo: string;
+  carrier: string;
+  flightDate: Date;
+  eta?: Date | null;
+  etd?: Date | null;
+  createdAt?: Date;
+  createdBy: string;
+  updatedAt?: Date;
+  updatedBy?: string | null;
+  deletedAt?: Date | null;
+  deletedBy?: string | null;
+
+  constructor(partial: Partial<FlightManifestEntity>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class HotelManifestEntity {
+  id?: string;
+  submissionId?: string;
+  name: string;
+  resvNo: string;
+  checkIn: Date;
+  checkOut: Date;
+  city: HotelCity;
+  roomType: RoomType;
+  createdAt?: Date;
+  createdBy: string;
+  updatedAt?: Date;
+  updatedBy?: string | null;
+  deletedAt?: Date | null;
+  deletedBy?: string | null;
+
+  constructor(partial: Partial<HotelManifestEntity>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class TransportationManifestEntity {
+  id?: string;
+  submissionId?: string;
+  type: TransportType;
+  company: string;
+  time: string;
+  date: Date;
+  from?: string | null;
+  to?: string | null;
+  totalVehicle: number;
+  totalH?: number | null;
+  createdAt?: Date;
+  createdBy: string;
+  updatedAt?: Date;
+  updatedBy?: string | null;
+  deletedAt?: Date | null;
+  deletedBy?: string | null;
+
+  constructor(partial: Partial<TransportationManifestEntity>) {
+    Object.assign(this, partial);
+  }
+}
 
 export class VisaSubmissionEntity {
   id: string;
@@ -16,31 +80,14 @@ export class VisaSubmissionEntity {
   paymentStatus: PaymentStatus;
   proofOfPayment?: string | null;
   totalAmount: number;
-  flightEta?: Date | null;
-  flightEtd?: Date | null;
-  hotelCheckin?: Date | null;
-  hotelCheckout?: Date | null;
-  transportType?: string | null;
-  tripRoute?: string | null;
 
-  flightNo: string;
-  carrier: string;
-  flightDate: Date;
-  hotelMakkahName: string;
-  hotelMadinahName: string;
-  hotelMakkahResvNo: string;
-  hotelMadinahResvNo: string;
-  roomType: RoomType;
-  busCompany: string;
-  busTime: string;
-  totalBus: number;
-  trainDate: Date;
-  trainFrom: string;
-  trainTo: string;
-  trainTime: string;
-  trainTotalH: number;
   rawdahMenTime: string;
   rawdahWomenTime: string;
+
+  flights?: FlightManifestEntity[];
+  hotels?: HotelManifestEntity[];
+  transportations?: TransportationManifestEntity[];
+
   createdAt: Date;
   createdBy: string;
   updatedAt: Date;

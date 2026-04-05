@@ -26,6 +26,10 @@ export class DashboardRepository implements IDashboardRepository {
         where,
         skip,
         take,
+        include: {
+          flights: true,
+          transportations: true,
+        },
         orderBy: {
           createdAt: 'desc',
         },

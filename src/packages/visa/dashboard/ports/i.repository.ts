@@ -6,5 +6,5 @@ export interface IDashboardRepository {
     agencySlug: string,
     skip?: number,
     take?: number,
-  ) => Promise<{ count: number; rows: VisaSubmission[] }>;
+  ) => Promise<{ count: number; rows: any[] }>;
 }

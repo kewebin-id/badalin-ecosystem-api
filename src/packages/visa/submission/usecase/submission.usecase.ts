@@ -29,21 +29,6 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
       }
     }
 
-    const flightEta = new Date(dto.flightEta).toISOString();
-    const flightEtd = new Date(dto.flightEtd).toISOString();
-    const hotelCheckin = new Date(dto.hotelCheckin).toISOString();
-    const hotelCheckout = new Date(dto.hotelCheckout).toISOString();
-
-    if (hotelCheckin !== flightEta || hotelCheckout !== flightEtd) {
-      throw new BadRequestException('Zero Gap Sync Error. Hotel dates must match flight times.');
-    }
-
-    if (dto.transportType === 'Avanza/MPV' && dto.tripRoute === 'Bandara-Hotel' && pilgrims.length >= 6) {
-      throw new BadRequestException(
-        'Smart Transport limit: Avanza/MPV only supports up to 5 passengers for Airport-Hotel route.',
-      );
-    }
-
     const totalAmount = Number(agency.visaPrice) * pilgrims.length;
 
     const submission = await this.repository.create(
@@ -54,30 +39,36 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
         resultSnapshot: JSON.parse(JSON.stringify(pilgrims)),
         createdBy: ctx.id,
         status: VerifyStatus.IN_REVIEW,
-        flightEta: new Date(dto.flightEta),
-        flightEtd: new Date(dto.flightEtd),
-        hotelCheckin: new Date(dto.hotelCheckin),
-        hotelCheckout: new Date(dto.hotelCheckout),
-        transportType: dto.transportType,
-        tripRoute: dto.tripRoute,
-        flightNo: dto.flightNo,
-        carrier: dto.carrier,
-        flightDate: new Date(dto.flightDate),
-        hotelMakkahName: dto.hotelMakkahName,
-        hotelMadinahName: dto.hotelMadinahName,
-        hotelMakkahResvNo: dto.hotelMakkahResvNo,
-        hotelMadinahResvNo: dto.hotelMadinahResvNo,
-        roomType: dto.roomType,
-        busCompany: dto.busCompany,
-        busTime: dto.busTime,
-        totalBus: dto.totalBus,
-        trainDate: new Date(dto.trainDate),
-        trainFrom: dto.trainFrom,
-        trainTo: dto.trainTo,
-        trainTime: dto.trainTime,
-        trainTotalH: dto.trainTotalH,
         rawdahMenTime: dto.rawdahMenTime,
         rawdahWomenTime: dto.rawdahWomenTime,
+        flights: dto.flights.map((f) => ({
+          flightNo: f.flightNo,
+          carrier: f.carrier,
+          flightDate: new Date(f.flightDate),
+          eta: f.eta ? new Date(f.eta) : null,
+          etd: f.etd ? new Date(f.etd) : null,
+          createdBy: ctx.id,
+        })),
+        hotels: dto.hotels.map((h) => ({
+          name: h.name,
+          resvNo: h.resvNo,
+          checkIn: new Date(h.checkIn),
+          checkOut: new Date(h.checkOut),
+          city: h.city,
+          roomType: h.roomType,
+          createdBy: ctx.id,
+        })),
+        transportations: dto.transportations.map((t) => ({
+          type: t.type,
+          company: t.company,
+          time: t.time,
+          date: new Date(t.date),
+          from: t.from,
+          to: t.to,
+          totalVehicle: t.totalVehicle,
+          totalH: t.totalH,
+          createdBy: ctx.id,
+        })),
       },
       dto.pilgrimIds,
     );
