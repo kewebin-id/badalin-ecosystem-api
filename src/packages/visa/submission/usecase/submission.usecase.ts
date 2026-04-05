@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { VerifyStatus } from '@prisma/client';
 import { VisaSubmissionEntity } from '../domain/submission.entity';
-import { SubmitVisaDto } from '../dto/submission.dto';
+import { CreateVisaSubmissionDto } from '../dto/submission.dto';
 import { IVisaSubmissionRepository, IVisaSubmissionUseCase } from '../ports';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 
@@ -12,7 +12,7 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
     private readonly repository: IVisaSubmissionRepository,
   ) {}
 
-  async create(ctx: IUserContext, dto: SubmitVisaDto): Promise<{ data: VisaSubmissionEntity }> {
+  async create(ctx: IUserContext, dto: CreateVisaSubmissionDto): Promise<{ data: VisaSubmissionEntity }> {
     const agency = await this.repository.findAgencyBySlug(ctx.agencySlug);
     if (!agency) {
       throw new NotFoundException('Agency not found');
@@ -60,6 +60,24 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
         hotelCheckout: new Date(dto.hotelCheckout),
         transportType: dto.transportType,
         tripRoute: dto.tripRoute,
+        flightNo: dto.flightNo,
+        carrier: dto.carrier,
+        flightDate: new Date(dto.flightDate),
+        hotelMakkahName: dto.hotelMakkahName,
+        hotelMadinahName: dto.hotelMadinahName,
+        hotelMakkahResvNo: dto.hotelMakkahResvNo,
+        hotelMadinahResvNo: dto.hotelMadinahResvNo,
+        roomType: dto.roomType,
+        busCompany: dto.busCompany,
+        busTime: dto.busTime,
+        totalBus: dto.totalBus,
+        trainDate: new Date(dto.trainDate),
+        trainFrom: dto.trainFrom,
+        trainTo: dto.trainTo,
+        trainTime: dto.trainTime,
+        trainTotalH: dto.trainTotalH,
+        rawdahMenTime: dto.rawdahMenTime,
+        rawdahWomenTime: dto.rawdahWomenTime,
       },
       dto.pilgrimIds,
     );

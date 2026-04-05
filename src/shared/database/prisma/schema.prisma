@@ -34,6 +34,13 @@ enum PilgrimRelation {
   SIBLING
 }
 
+enum RoomType {
+  DBL
+  TRPL
+  QUAD
+  QUINT
+}
+
 model Agency {
   id                String           @id @default(uuid())
   name              String
@@ -126,14 +133,35 @@ model VisaSubmission {
   rejectionReason String?       @map("rejection_reason")
   paymentStatus   PaymentStatus @default(PENDING) @map("payment_status")
   proofOfPayment  String?       @map("proof_of_payment")
-  totalAmount     Decimal       @map("total_amount")
-  flightEta       DateTime?     @map("flight_eta")
-  flightEtd       DateTime?     @map("flight_etd")
-  hotelCheckin    DateTime?     @map("hotel_checkin")
-  hotelCheckout   DateTime?     @map("hotel_checkout")
-  transportType   String?       @map("transport_type")
-  tripRoute       String?       @map("trip_route")
-  leader          User          @relation("LeaderSubmissions", fields: [leaderId], references: [id])
+  totalAmount         Decimal       @map("total_amount")
+  
+  flightEta           DateTime?     @map("flight_eta")
+  flightEtd           DateTime?     @map("flight_etd")
+  hotelCheckin        DateTime?     @map("hotel_checkin")
+  hotelCheckout       DateTime?     @map("hotel_checkout")
+  transportType       String?       @map("transport_type")
+  tripRoute           String?       @map("trip_route")
+
+  flightNo            String        @map("flight_no")
+  carrier             String        @map("carrier")
+  flightDate          DateTime      @map("flight_date")
+  hotelMakkahName     String        @map("hotel_makkah_name")
+  hotelMadinahName    String        @map("hotel_madinah_name")
+  hotelMakkahResvNo   String        @map("hotel_makkah_resv_no")
+  hotelMadinahResvNo  String        @map("hotel_madinah_resv_no")
+  roomType            RoomType      @map("room_type")
+  busCompany          String        @map("bus_company")
+  busTime             String        @map("bus_time")
+  totalBus            Int           @map("total_bus")
+  trainDate           DateTime      @map("train_date")
+  trainFrom           String        @map("train_from")
+  trainTo             String        @map("train_to")
+  trainTime           String        @map("train_time")
+  trainTotalH         Int           @map("train_total_h")
+  rawdahMenTime       String        @map("rawdah_men_time")
+  rawdahWomenTime     String        @map("rawdah_women_time")
+
+  leader              User          @relation("LeaderSubmissions", fields: [leaderId], references: [id])
   agency          Agency        @relation("AgencySubmissions", fields: [agencySlug], references: [slug])
   members         Pilgrim[]     @relation("SubmissionMembers")
   createdAt       DateTime      @default(now()) @map("created_at")
