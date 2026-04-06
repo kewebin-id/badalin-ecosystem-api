@@ -1,8 +1,8 @@
-import { EServiceRoutes, ESubmissionRoutes, validationMessage } from '@/shared/constants';
+import { EServiceRoutes, ESubmissionRoutes, EVisaRoutes, validationMessage } from '@/shared/constants';
 import { response } from '@/shared/utils/rest-api/response';
 import { Body, Controller, HttpStatus, Inject, Logger, Post, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
-import { CreateVisaSubmissionDto } from '../dto/submission.dto';
+import { CreateVisaSubmissionDto, PreviewVisaSubmissionDto } from '../dto/submission.dto';
 import { VisaSubmissionControllerPort } from '../ports/i.controller';
 import { IVisaSubmissionUseCase } from '../ports/i.usecase';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
@@ -40,6 +40,27 @@ export class VisaSubmissionController implements VisaSubmissionControllerPort {
       Logger.error(error instanceof Error ? error.message : 'Error in submit');
       return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
         message: error instanceof Error ? error.message : 'Failed to submit visa',
+      });
+    }
+  }
+
+  @Post(`${EVisaRoutes.SUBMISSIONS.replace(EServiceRoutes.VISA, '')}${ESubmissionRoutes.PREVIEW}`)
+  async preview(
+    @Body() dto: PreviewVisaSubmissionDto,
+    @UserContext() ctx: IUserContext,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const result = await this.submitVisaUseCase.preview(ctx, dto);
+
+      return response[HttpStatus.OK](res, {
+        message: 'Preview & Validation successful',
+        data: result,
+      });
+    } catch (error) {
+      Logger.error(error instanceof Error ? error.message : 'Error in preview');
+      return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
+        message: error instanceof Error ? error.message : 'Failed to preview visa submission',
       });
     }
   }

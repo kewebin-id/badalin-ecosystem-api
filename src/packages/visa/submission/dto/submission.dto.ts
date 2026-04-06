@@ -122,4 +122,14 @@ export class CreateVisaSubmissionDto {
   transportations: TransportationManifestDto[];
 }
 
+export class PreviewVisaSubmissionDto extends CreateVisaSubmissionDto {}
+
+export class VisaSubmissionPreviewResponseDto {
+  isValid: boolean;
+  totalAmount: number;
+  breakdown: string;
+  errors: string[];
+  warnings: string[];
+}
+
 export class UpdateVisaSubmissionDto extends CreateVisaSubmissionDto {}
