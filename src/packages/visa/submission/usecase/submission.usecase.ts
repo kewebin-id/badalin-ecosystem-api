@@ -53,6 +53,7 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
           eta: new Date(f.eta),
           etd: new Date(f.etd),
           createdBy: ctx.id,
+          imageUrls: f.imageUrls,
         })),
         hotels: dto.hotels.map((h) => ({
           name: h.name,
@@ -62,6 +63,7 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
           city: h.city,
           roomType: h.roomType,
           createdBy: ctx.id,
+          imageUrls: h.imageUrls,
         })),
         transportations: dto.transportations.map((t) => ({
           type: t.type,
@@ -73,6 +75,7 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
           totalVehicle: t.totalVehicle,
           totalH: t.totalH,
           createdBy: ctx.id,
+          imageUrls: t.imageUrls || [],
         })),
       },
       dto.pilgrimIds,
@@ -132,6 +135,9 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
       if (eta <= etd) {
         errors.push(`${label}: ETA (Arrival) must be after ETD (Departure)`);
       }
+      if (!f.imageUrls || f.imageUrls.length === 0) {
+        errors.push(`${label}: E-Ticket image is mandatory`);
+      }
     });
 
     dto.hotels.forEach((h, idx) => {
@@ -145,6 +151,9 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
       const checkOut = new Date(h.checkOut);
       if (checkIn >= checkOut) {
         errors.push(`${label}: Check-In must be before Check-Out`);
+      }
+      if (!h.imageUrls || h.imageUrls.length === 0) {
+        errors.push(`${label}: Hotel Voucher image is mandatory`);
       }
     });
 
