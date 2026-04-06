@@ -1,8 +1,15 @@
-import { EAuthRoutes, EVisaRoutes, validationMessage } from '@/shared/constants';
-import { Body, Controller, HttpStatus, Inject, Post, Res, Logger } from '@nestjs/common';
-import { Response } from 'express';
+import { EAuthRoutes, EVisaRoutes } from '@/shared/constants';
 import { response } from '@/shared/utils/rest-api/response';
-import { CheckUserDto, LoginDto, RegisterDto, ForgotPasswordDto, VerifyResetTokenDto, ResetPasswordDto } from '../dto/auth.dto';
+import { Body, Controller, HttpStatus, Inject, Logger, Post, Res } from '@nestjs/common';
+import { Response } from 'express';
+import {
+  CheckUserDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  VerifyResetTokenDto,
+} from '../dto/auth.dto';
 import { IAuthUseCase } from '../ports/i.usecase';
 
 @Controller(EVisaRoutes.AUTH)
@@ -45,7 +52,7 @@ export class AuthController {
       }
       const user = responseData.data;
       return response[HttpStatus.CREATED](res, {
-        message: validationMessage('User')[201](),
+        message: 'Registration successful. Welcome to Badalin Ecosystem',
         data: { id: user?.id, email: user?.email },
       });
     } catch (error) {
@@ -66,7 +73,7 @@ export class AuthController {
         });
       }
       return response[HttpStatus.OK](res, {
-        message: 'Login successful',
+        message: 'Login successful. Welcome back to Badalin Ecosystem',
         data: responseData.data,
       });
     } catch (error) {
