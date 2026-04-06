@@ -13,11 +13,13 @@ export enum EVisaRoutes {
   DOCUMENTS = `${EServiceRoutes.VISA}/documents`,
   DASHBOARD = `${EServiceRoutes.VISA}/dashboard`,
   UPLOAD = `${EPrefix.V1}/upload`,
+  SUBMISSIONS = `${EServiceRoutes.VISA}/submissions`,
 }
 
 export enum ESubmissionRoutes {
   SUBMIT = '/submit',
   UPLOAD_PROOF = '/:id/upload-proof',
+  PREVIEW = '/preview',
 }
 
 export enum EDocumentRoutes {
