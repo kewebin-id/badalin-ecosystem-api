@@ -11,7 +11,12 @@ export class PrismaPilgrimRepository implements IPilgrimRepository {
     return { leaderId: ctx.id, agencySlug: ctx.agencySlug };
   }
 
-  findAll = async (ctx: IUserContext, skip: number = 0, take: number = 10, search?: string): Promise<{ count: number; rows: Pilgrim[] }> => {
+  findAll = async (
+    ctx: IUserContext,
+    skip: number = 0,
+    take: number = 10,
+    search?: string,
+  ): Promise<{ count: number; rows: Pilgrim[] }> => {
     const where: Prisma.PilgrimWhereInput = {
       ...this.getQueryFilter(ctx),
       ...(search && {

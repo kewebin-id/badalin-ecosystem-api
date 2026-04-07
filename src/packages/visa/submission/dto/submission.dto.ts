@@ -1,4 +1,14 @@
-import { ArrayNotEmpty, IsArray, IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { RoomType, TransportType, HotelCity, FlightType } from '@prisma/client';
 
@@ -140,11 +150,16 @@ export class CreateVisaSubmissionDto {
 
 export class PreviewVisaSubmissionDto extends CreateVisaSubmissionDto {}
 
+export class VisaSubmissionErrorDto {
+  path: string;
+  message: string;
+}
+
 export class VisaSubmissionPreviewResponseDto {
   isValid: boolean;
   totalAmount: number;
   breakdown: string;
-  errors: string[];
+  errors: VisaSubmissionErrorDto[];
   warnings: string[];
 }
 

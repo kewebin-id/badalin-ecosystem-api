@@ -56,11 +56,7 @@ export class AuthUseCase implements IAuthUseCase {
         fullName: dto.fullName,
         password: hashedPassword,
       };
-      const user = await this.repository.create(
-        data,
-        agencySlug || process.env.DEFAULT_AGENCY,
-        'SYSTEM_REGISTRATION',
-      );
+      const user = await this.repository.create(data, agencySlug || process.env.DEFAULT_AGENCY, 'SYSTEM_REGISTRATION');
 
       if (user.email) {
         sendAccountActiveEmail(user.email, dto.fullName).catch((err) => {
@@ -200,9 +196,15 @@ export class AuthUseCase implements IAuthUseCase {
         throw new HttpException('Invalid or expired reset token', 400);
       }
 
-      Logger.debug(`Resetting password for user ${user.id}. Raw password length: ${dto.password.length}`, 'AuthUseCase');
+      Logger.debug(
+        `Resetting password for user ${user.id}. Raw password length: ${dto.password.length}`,
+        'AuthUseCase',
+      );
       const hashedPassword = await bcrypt.hash(dto.password, 10);
-      Logger.debug(`Hashed password for user ${user.id}. Hash prefix: ${hashedPassword.substring(0, 10)}...`, 'AuthUseCase');
+      Logger.debug(
+        `Hashed password for user ${user.id}. Hash prefix: ${hashedPassword.substring(0, 10)}...`,
+        'AuthUseCase',
+      );
 
       await this.repository.updatePassword(user.id, hashedPassword, user.id);
 

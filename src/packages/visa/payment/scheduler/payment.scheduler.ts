@@ -24,5 +24,5 @@ export class PaymentScheduler {
       await this.repository.cancelTransaction(tx.id);
       this.logger.log(`Transaction ${tx.id} auto-cancelled.`);
     }
-  };
+  }
 }

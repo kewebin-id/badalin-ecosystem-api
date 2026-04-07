@@ -84,7 +84,10 @@ export class PrismaAuthRepository implements IAuthRepository {
 
   updatePassword = async (userId: string, targetPassword: string, updatedBy?: string): Promise<void> => {
     try {
-      Logger.debug(`Updating password for user ${userId}. Hash prefix: ${targetPassword.substring(0, 10)}...`, 'AuthRepository');
+      Logger.debug(
+        `Updating password for user ${userId}. Hash prefix: ${targetPassword.substring(0, 10)}...`,
+        'AuthRepository',
+      );
       const result = await this.db.user.update({
         where: { id: userId },
         data: {
@@ -94,7 +97,10 @@ export class PrismaAuthRepository implements IAuthRepository {
           updatedBy: updatedBy || null,
         },
       });
-      Logger.info(`Successfully updated password for user ${userId}. Database reported ID: ${result.id}`, 'AuthRepository');
+      Logger.info(
+        `Successfully updated password for user ${userId}. Database reported ID: ${result.id}`,
+        'AuthRepository',
+      );
     } catch (error) {
       Logger.error('Error in updatePassword:', error);
       throw error;

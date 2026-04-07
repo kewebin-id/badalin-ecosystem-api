@@ -41,9 +41,9 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       await this.syncUserPhoto(ctx.id, finalPhotoUrl);
     }
 
-    return { 
-      data: pilgrim, 
-      message: ocrWarning || undefined 
+    return {
+      data: pilgrim,
+      message: ocrWarning || undefined,
     };
   };
 
@@ -51,7 +51,11 @@ export class PilgrimUseCase implements IPilgrimUseCase {
     return this.repository.findById(id, ctx);
   };
 
-  update = async (id: string, ctx: IUserContext, dto: UpdatePilgrimDto): Promise<{ data: Pilgrim; message?: string }> => {
+  update = async (
+    id: string,
+    ctx: IUserContext,
+    dto: UpdatePilgrimDto,
+  ): Promise<{ data: Pilgrim; message?: string }> => {
     const pilgrim = await this.repository.findById(id, ctx);
 
     if (!pilgrim) {
@@ -80,9 +84,9 @@ export class PilgrimUseCase implements IPilgrimUseCase {
       await this.syncUserPhoto(ctx.id, finalPhotoUrl);
     }
 
-    return { 
-      data: result, 
-      message: ocrWarning || undefined 
+    return {
+      data: result,
+      message: ocrWarning || undefined,
     };
   };
 
@@ -92,8 +96,7 @@ export class PilgrimUseCase implements IPilgrimUseCase {
         where: { id: userId },
         data: { photoUrl },
       });
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   delete = async (id: string, ctx: IUserContext): Promise<Pilgrim> => {

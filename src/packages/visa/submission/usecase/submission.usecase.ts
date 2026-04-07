@@ -8,6 +8,15 @@ import {
   VisaSubmissionPreviewResponseDto,
 } from '../dto/submission.dto';
 import { IVisaSubmissionRepository, IVisaSubmissionUseCase } from '../ports';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import { VisaSubmissionErrorDto } from '../dto/submission.dto';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const DEFAULT_TZ = 'Asia/Jakarta';
 
 @Injectable()
 export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
@@ -86,23 +95,23 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
   }
 
   async preview(ctx: IUserContext, dto: PreviewVisaSubmissionDto): Promise<VisaSubmissionPreviewResponseDto> {
-    const errors: string[] = [];
+    const errors: VisaSubmissionErrorDto[] = [];
     const warnings: string[] = [];
 
     const agency = await this.repository.findAgencyBySlug(dto.agencySlug);
     if (!agency) {
-      errors.push('Agency not found');
+      errors.push({ path: 'agencySlug', message: 'Agency not found' });
     }
 
     const pilgrims = await this.repository.findPilgrimsByIds(dto.pilgrimIds, ctx);
     if (!pilgrims || pilgrims.length !== dto.pilgrimIds.length) {
-      errors.push('Some pilgrims not found or access denied');
+      errors.push({ path: 'pilgrimIds', message: 'Some pilgrims not found or access denied' });
     }
 
     if (pilgrims) {
       pilgrims.forEach((p) => {
         if (!p.isComplete) {
-          errors.push(`[${p.id}] Pilgrim data is incomplete for ${p.fullName}`);
+          errors.push({ path: 'pilgrimIds', message: `Pilgrim data is incomplete for ${p.fullName}` });
         }
       });
     }
@@ -120,53 +129,51 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
     }
 
     dto.flights.forEach((f, idx) => {
-      const label = `Flight #${idx + 1} (${f.type})`;
-      if (!f.flightNo) errors.push(`${label}: Flight No is mandatory`);
-      if (!f.carrier) errors.push(`${label}: Carrier is mandatory`);
+      const pathPrefix = `flights.${idx}`;
+      if (!f.flightNo) errors.push({ path: `${pathPrefix}.flightNo`, message: 'Flight No is mandatory' });
+      if (!f.carrier) errors.push({ path: `${pathPrefix}.carrier`, message: 'Carrier is mandatory' });
 
-      const eta = new Date(f.eta);
-      const etd = new Date(f.etd);
-      if (eta <= etd) {
-        errors.push(`${label}: ETA (Arrival) must be after ETD (Departure)`);
+      const eta = dayjs(f.eta);
+      const etd = dayjs(f.etd);
+      if (eta.isBefore(etd) || eta.isSame(etd)) {
+        errors.push({ path: `${pathPrefix}.eta`, message: 'ETA (Arrival) must be after ETD (Departure)' });
       }
       if (!f.imageUrls || f.imageUrls.length === 0) {
-        errors.push(`${label}: E-Ticket image is mandatory`);
+        errors.push({ path: `${pathPrefix}.imageUrls`, message: 'E-Ticket image is mandatory' });
       }
     });
 
     dto.hotels.forEach((h, idx) => {
-      const label = `Hotel #${idx + 1} (${h.city})`;
-      if (!h.name) errors.push(`${label}: Hotel Name is mandatory`);
-      if (!h.resvNo) errors.push(`${label}: Booking Code (Resv No) is mandatory`);
-      if (!h.city) errors.push(`${label}: City is mandatory`);
-      if (!h.roomType) errors.push(`${label}: Room Type is mandatory`);
+      const pathPrefix = `hotels.${idx}`;
+      if (!h.name) errors.push({ path: `${pathPrefix}.name`, message: 'Hotel Name is mandatory' });
+      if (!h.resvNo) errors.push({ path: `${pathPrefix}.resvNo`, message: 'Booking Code (Resv No) is mandatory' });
+      if (!h.city) errors.push({ path: `${pathPrefix}.city`, message: 'City is mandatory' });
+      if (!h.roomType) errors.push({ path: `${pathPrefix}.roomType`, message: 'Room Type is mandatory' });
 
-      const checkIn = new Date(h.checkIn);
-      const checkOut = new Date(h.checkOut);
-      if (checkIn >= checkOut) {
-        errors.push(`${label}: Check-In must be before Check-Out`);
+      const checkIn = dayjs(h.checkIn);
+      const checkOut = dayjs(h.checkOut);
+      if (checkIn.isAfter(checkOut) || checkIn.isSame(checkOut)) {
+        errors.push({ path: `${pathPrefix}.checkIn`, message: 'Check-In must be before Check-Out' });
       }
       if (!h.imageUrls || h.imageUrls.length === 0) {
-        errors.push(`${label}: Hotel Voucher image is mandatory`);
+        errors.push({ path: `${pathPrefix}.imageUrls`, message: 'Hotel Voucher image is mandatory' });
       }
     });
 
     dto.transportations.forEach((t, idx) => {
-      const label = `Transportation #${idx + 1} (${t.type})`;
+      const pathPrefix = `transportations.${idx}`;
       if (!t.company) {
-        errors.push(`${label}: Transport Company is mandatory`);
+        errors.push({ path: `${pathPrefix}.company`, message: 'Transport Company is mandatory' });
       }
     });
 
     if (dto.hotels.length > 0) {
-      const sortedHotels = [...dto.hotels].sort(
-        (a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime(),
-      );
+      const sortedHotels = [...dto.hotels].sort((a, b) => dayjs(a.checkIn).valueOf() - dayjs(b.checkIn).valueOf());
       const firstHotel = sortedHotels[0];
       const lastHotel = sortedHotels[sortedHotels.length - 1];
 
-      const firstCheckIn = new Date(firstHotel.checkIn).toISOString().split('T')[0];
-      const lastCheckOut = new Date(lastHotel.checkOut).toISOString().split('T')[0];
+      const firstCheckIn = dayjs(firstHotel.checkIn).tz(DEFAULT_TZ).format('YYYY-MM-DD');
+      const lastCheckOut = dayjs(lastHotel.checkOut).tz(DEFAULT_TZ).format('YYYY-MM-DD');
 
       if (firstHotel.city === HotelCity.MAKKAH) {
         warnings.push('Detected route: Makkah-first');
@@ -176,17 +183,23 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
 
       const departureFlight = dto.flights.find((f) => f.type === FlightType.DEPARTURE);
       if (departureFlight) {
-        const depDate = new Date(departureFlight.flightDate).toISOString().split('T')[0];
+        const depDate = dayjs(departureFlight.eta).tz(DEFAULT_TZ).format('YYYY-MM-DD');
         if (depDate !== firstCheckIn) {
-          errors.push(`Departure flight date (${depDate}) must match the first hotel check-in date (${firstCheckIn})`);
+          errors.push({
+            path: 'flights.0.eta',
+            message: `Departure flight date (${depDate}) must match the first hotel check-in date (${firstCheckIn})`,
+          });
         }
       }
 
       const returnFlight = dto.flights.find((f) => f.type === FlightType.RETURN);
       if (returnFlight) {
-        const retDate = new Date(returnFlight.flightDate).toISOString().split('T')[0];
+        const retDate = dayjs(returnFlight.etd).tz(DEFAULT_TZ).format('YYYY-MM-DD');
         if (retDate !== lastCheckOut) {
-          errors.push(`Return flight date (${retDate}) must match the last hotel check-out date (${lastCheckOut})`);
+          errors.push({
+            path: 'flights.1.etd',
+            message: `Return flight date (${retDate}) must match the last hotel check-out date (${lastCheckOut})`,
+          });
         }
       }
     }
