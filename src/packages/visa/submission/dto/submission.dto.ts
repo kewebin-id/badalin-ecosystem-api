@@ -118,6 +118,10 @@ export class CreateVisaSubmissionDto {
   @IsNotEmpty()
   rawdahWomenTime: string;
 
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => FlightManifestDto)

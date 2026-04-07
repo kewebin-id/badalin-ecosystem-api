@@ -84,6 +84,7 @@ export class VisaSubmissionEntity {
 
   rawdahMenTime: string;
   rawdahWomenTime: string;
+  notes?: string | null;
 
   flights?: FlightManifestEntity[];
   hotels?: HotelManifestEntity[];
