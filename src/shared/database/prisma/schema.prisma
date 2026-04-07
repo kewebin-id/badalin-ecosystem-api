@@ -157,6 +157,7 @@ model VisaSubmission {
 
   rawdahMenTime   String @map("rawdah_men_time")
   rawdahWomenTime String @map("rawdah_women_time")
+  notes           String? @map("notes")
 
   flights         FlightManifest[]
   hotels          HotelManifest[]

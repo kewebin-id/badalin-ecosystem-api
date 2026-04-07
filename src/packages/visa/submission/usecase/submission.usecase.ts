@@ -45,6 +45,7 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
         status: VerifyStatus.IN_REVIEW,
         rawdahMenTime: dto.rawdahMenTime,
         rawdahWomenTime: dto.rawdahWomenTime,
+        notes: dto.notes,
         flights: dto.flights.map((f) => ({
           type: f.type,
           flightNo: f.flightNo,
