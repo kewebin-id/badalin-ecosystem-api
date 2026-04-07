@@ -119,13 +119,6 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
       }
     }
 
-    if (!dto.rawdahMenTime) {
-      errors.push('Rawdah Men Time is mandatory');
-    }
-    if (!dto.rawdahWomenTime) {
-      errors.push('Rawdah Women Time is mandatory');
-    }
-
     dto.flights.forEach((f, idx) => {
       const label = `Flight #${idx + 1} (${f.type})`;
       if (!f.flightNo) errors.push(`${label}: Flight No is mandatory`);

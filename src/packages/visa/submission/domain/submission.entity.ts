@@ -82,8 +82,8 @@ export class VisaSubmissionEntity {
   proofOfPayment?: string | null;
   totalAmount: number;
 
-  rawdahMenTime: string;
-  rawdahWomenTime: string;
+  rawdahMenTime?: string | null;
+  rawdahWomenTime?: string | null;
   notes?: string | null;
 
   flights?: FlightManifestEntity[];
