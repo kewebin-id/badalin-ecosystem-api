@@ -16,7 +16,7 @@ export class UploadUseCase implements IUploadUseCase {
   async execute(dto: UploadDto): Promise<IUsecaseResponse<UploadResult>> {
     try {
       const publicUrl = await this.repository.upload(dto.file, dto.bucket, dto.fileName);
-      
+
       let ocrData: OcrResult | undefined = undefined;
       if (dto.isOcr) {
         ocrData = await this.ocrService.extractData(dto.file, dto.ocrType || 'PASSPORT');

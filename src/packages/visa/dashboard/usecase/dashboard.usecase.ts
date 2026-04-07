@@ -37,8 +37,12 @@ export class DashboardUseCase implements IDashboardUseCase {
 
         return {
           transaction_id: sub.id,
-          flight_route: firstTransport ? `${firstTransport.from || ''} - ${firstTransport.to || ''}` : firstFlight?.carrier || '-',
-          destination_date: lastFlight?.etd ? lastFlight.etd.toISOString() : lastFlight?.flightDate.toISOString() || '-',
+          flight_route: firstTransport
+            ? `${firstTransport.from || ''} - ${firstTransport.to || ''}`
+            : firstFlight?.carrier || '-',
+          destination_date: lastFlight?.etd
+            ? lastFlight.etd.toISOString()
+            : lastFlight?.flightDate.toISOString() || '-',
           total_amount: Number(sub.totalAmount),
           status: sub.status,
         };
