@@ -111,12 +111,12 @@ export class CreateVisaSubmissionDto {
   pilgrimIds: string[];
 
   @IsString()
-  @IsNotEmpty()
-  rawdahMenTime: string;
+  @IsOptional()
+  rawdahMenTime?: string;
 
   @IsString()
-  @IsNotEmpty()
-  rawdahWomenTime: string;
+  @IsOptional()
+  rawdahWomenTime?: string;
 
   @IsString()
   @IsOptional()

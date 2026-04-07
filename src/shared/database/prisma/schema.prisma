@@ -155,8 +155,8 @@ model VisaSubmission {
   proofOfPayment  String?       @map("proof_of_payment")
   totalAmount     Decimal       @map("total_amount")
 
-  rawdahMenTime   String @map("rawdah_men_time")
-  rawdahWomenTime String @map("rawdah_women_time")
+  rawdahMenTime   String? @map("rawdah_men_time")
+  rawdahWomenTime String? @map("rawdah_women_time")
   notes           String? @map("notes")
 
   flights         FlightManifest[]
