@@ -153,4 +153,48 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
       },
     });
   }
+ 
+  async findAll(
+    params: { page?: number; limit?: number; search?: string },
+    ctx: IUserContext,
+  ): Promise<{ data: VisaSubmissionEntity[]; total: number }> {
+    const { page = 1, limit = 10, search = '' } = params;
+    const skip = (page - 1) * limit;
+ 
+    const where: Prisma.VisaSubmissionWhereInput = {
+      ...this.getQueryFilter(ctx),
+      ...(search
+        ? {
+            OR: [{ id: { contains: search, mode: 'insensitive' } }, { agencySlug: { contains: search, mode: 'insensitive' } }],
+          }
+        : {}),
+    };
+ 
+    const [total, submissions] = await Promise.all([
+      this.db.visaSubmission.count({ where }),
+      this.db.visaSubmission.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          members: true,
+          flights: true,
+          hotels: true,
+          transportations: true,
+        },
+      }),
+    ]);
+ 
+    return {
+      total,
+      data: submissions.map(
+        (s) =>
+          new VisaSubmissionEntity({
+            ...s,
+            totalAmount: Number(s.totalAmount),
+          }),
+      ),
+    };
+  }
 }
