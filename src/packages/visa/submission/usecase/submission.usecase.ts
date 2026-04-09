@@ -216,4 +216,11 @@ export class SubmitVisaUseCase implements IVisaSubmissionUseCase {
   async getSubmission(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity | null> {
     return this.repository.findById(id, ctx);
   }
+ 
+  async getTransactions(
+    params: { page?: number; limit?: number; search?: string },
+    ctx: IUserContext,
+  ): Promise<{ data: VisaSubmissionEntity[]; total: number }> {
+    return this.repository.findAll(params, ctx);
+  }
 }

@@ -15,4 +15,8 @@ export interface IVisaSubmissionRepository {
   findGroupMembers: (leaderId: string, agencySlug: string) => Promise<Pilgrim[]>;
   findAgencyBySlug: (agencySlug: string) => Promise<Agency | null>;
   findPilgrimsByIds: (ids: string[], ctx: IUserContext) => Promise<Pilgrim[]>;
+  findAll: (
+    params: { page?: number; limit?: number; search?: string },
+    ctx: IUserContext,
+  ) => Promise<{ data: VisaSubmissionEntity[]; total: number }>;
 }

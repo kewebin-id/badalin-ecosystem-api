@@ -1,7 +1,7 @@
 import { ESubmissionRoutes, EVisaRoutes, validationMessage } from '@/shared/constants';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { response } from '@/shared/utils/rest-api/response';
-import { Body, Controller, HttpStatus, Inject, Logger, Param, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Inject, Logger, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { PaymentStatus } from '@prisma/client';
 import { Response } from 'express';
 import { CreateVisaSubmissionDto } from '../dto/submission.dto';
@@ -20,6 +20,33 @@ export class TransactionController implements VisaSubmissionTransactionControlle
     @Inject('IVisaSubmissionRepository')
     private readonly repository: IVisaSubmissionRepository,
   ) {}
+ 
+  @Get()
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search: string = '',
+    @UserContext() ctx: IUserContext,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const result = await this.submitVisaUseCase.getTransactions({ page, limit, search }, ctx);
+      return response[HttpStatus.OK](res, {
+        message: 'Transactions retrieved successfully',
+        data: result.data,
+        meta: {
+          total: result.total,
+          page: Number(page),
+          limit: Number(limit),
+        },
+      });
+    } catch (error) {
+      Logger.error(error instanceof Error ? error.message : 'Error retrieving transactions');
+      return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
+        message: error instanceof Error ? error.message : 'Failed to retrieve transactions',
+      });
+    }
+  }
 
   @Post()
   async create(
