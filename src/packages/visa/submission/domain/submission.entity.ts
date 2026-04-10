@@ -1,4 +1,4 @@
-import { PaymentStatus, VerifyStatus, Prisma, RoomType, TransportType, HotelCity, FlightType } from '@prisma/client';
+import { FlightType, HotelCity, PaymentStatus, Prisma, RoomType, TransportType, VerifyStatus } from '@prisma/client';
 
 export class FlightManifestEntity {
   id?: string;
@@ -118,14 +118,14 @@ export class VisaSubmissionEntity {
   constructor(partial: Partial<VisaSubmissionEntity>) {
     Object.assign(this, partial);
     delete this.createdBy;
-    delete this.updatedAt;
     delete this.updatedBy;
     delete this.deletedAt;
     delete this.deletedBy;
-    
-    if (this.flights) this.flights = this.flights.map(f => new FlightManifestEntity(f));
-    if (this.hotels) this.hotels = this.hotels.map(h => new HotelManifestEntity(h));
-    if (this.transportations) this.transportations = this.transportations.map(t => new TransportationManifestEntity(t));
+
+    if (this.flights) this.flights = this.flights.map((f) => new FlightManifestEntity(f));
+    if (this.hotels) this.hotels = this.hotels.map((h) => new HotelManifestEntity(h));
+    if (this.transportations)
+      this.transportations = this.transportations.map((t) => new TransportationManifestEntity(t));
 
     if (Array.isArray(this.members)) {
       this.members.forEach((m) => {
