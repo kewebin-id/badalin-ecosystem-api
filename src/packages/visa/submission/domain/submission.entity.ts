@@ -10,7 +10,7 @@ export class FlightManifestEntity {
   eta: Date;
   etd: Date;
   createdAt?: Date;
-  createdBy: string;
+  createdBy?: string;
   updatedAt?: Date;
   updatedBy?: string | null;
   deletedAt?: Date | null;
@@ -18,6 +18,11 @@ export class FlightManifestEntity {
 
   constructor(partial: Partial<FlightManifestEntity>) {
     Object.assign(this, partial);
+    delete this.createdBy;
+    delete this.updatedAt;
+    delete this.updatedBy;
+    delete this.deletedAt;
+    delete this.deletedBy;
   }
 }
 
@@ -31,7 +36,7 @@ export class HotelManifestEntity {
   city: HotelCity;
   roomType: RoomType;
   createdAt?: Date;
-  createdBy: string;
+  createdBy?: string;
   updatedAt?: Date;
   updatedBy?: string | null;
   deletedAt?: Date | null;
@@ -39,6 +44,11 @@ export class HotelManifestEntity {
 
   constructor(partial: Partial<HotelManifestEntity>) {
     Object.assign(this, partial);
+    delete this.createdBy;
+    delete this.updatedAt;
+    delete this.updatedBy;
+    delete this.deletedAt;
+    delete this.deletedBy;
   }
 }
 
@@ -54,7 +64,7 @@ export class TransportationManifestEntity {
   totalVehicle: number;
   totalH?: number | null;
   createdAt?: Date;
-  createdBy: string;
+  createdBy?: string;
   updatedAt?: Date;
   updatedBy?: string | null;
   deletedAt?: Date | null;
@@ -62,6 +72,11 @@ export class TransportationManifestEntity {
 
   constructor(partial: Partial<TransportationManifestEntity>) {
     Object.assign(this, partial);
+    delete this.createdBy;
+    delete this.updatedAt;
+    delete this.updatedBy;
+    delete this.deletedAt;
+    delete this.deletedBy;
   }
 }
 
@@ -91,13 +106,35 @@ export class VisaSubmissionEntity {
   transportations?: TransportationManifestEntity[];
 
   createdAt: Date;
-  createdBy: string;
-  updatedAt: Date;
+  createdBy?: string;
+  updatedAt?: Date;
   updatedBy?: string | null;
   deletedAt?: Date | null;
   deletedBy?: string | null;
 
+  members?: any;
+  agency?: { bankName?: string | null; bankAccountName?: string | null; bankAccountNumber?: string | null } | null;
+
   constructor(partial: Partial<VisaSubmissionEntity>) {
     Object.assign(this, partial);
+    delete this.createdBy;
+    delete this.updatedAt;
+    delete this.updatedBy;
+    delete this.deletedAt;
+    delete this.deletedBy;
+    
+    if (this.flights) this.flights = this.flights.map(f => new FlightManifestEntity(f));
+    if (this.hotels) this.hotels = this.hotels.map(h => new HotelManifestEntity(h));
+    if (this.transportations) this.transportations = this.transportations.map(t => new TransportationManifestEntity(t));
+
+    if (Array.isArray(this.members)) {
+      this.members.forEach((m) => {
+        delete m.createdBy;
+        delete m.updatedAt;
+        delete m.updatedBy;
+        delete m.deletedAt;
+        delete m.deletedBy;
+      });
+    }
   }
 }
