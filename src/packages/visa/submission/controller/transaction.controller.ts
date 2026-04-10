@@ -48,6 +48,31 @@ export class TransactionController implements VisaSubmissionTransactionControlle
     }
   }
 
+  @Get(':id')
+  async findOne(
+    @Param('id') id: string,
+    @UserContext() ctx: IUserContext,
+    @Res() res: Response,
+  ): Promise<Response> {
+    try {
+      const result = await this.submitVisaUseCase.getSubmission(id, ctx);
+      if (!result) {
+        return response[HttpStatus.NOT_FOUND](res, {
+          message: 'Transaction not found',
+        });
+      }
+      return response[HttpStatus.OK](res, {
+        message: 'Transaction retrieved successfully',
+        data: result,
+      });
+    } catch (error) {
+      Logger.error(error instanceof Error ? error.message : 'Error retrieving transaction');
+      return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
+        message: error instanceof Error ? error.message : 'Failed to retrieve transaction',
+      });
+    }
+  }
+
   @Post()
   async create(
     @Body() dto: CreateVisaSubmissionDto,
