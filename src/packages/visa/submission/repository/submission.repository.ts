@@ -87,6 +87,13 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
         flights: true,
         hotels: true,
         transportations: true,
+        agency: {
+          select: {
+            bankName: true,
+            bankAccountName: true,
+            bankAccountNumber: true,
+          },
+        },
       },
     });
 
