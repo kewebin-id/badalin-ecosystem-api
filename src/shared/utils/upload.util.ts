@@ -17,7 +17,9 @@ export const uploadFile = async (
 ) => {
   try {
     let body: Buffer;
-    let finalFileName = fileName || `${Math.random().toString(36).substring(2)}-${Date.now()}`;
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    let finalFileName = `${fileName || randomStr}-${timestamp}`;
     let contentType: string | undefined;
 
     if (typeof fileOrBase64 === 'string' && fileOrBase64.startsWith('data:')) {
