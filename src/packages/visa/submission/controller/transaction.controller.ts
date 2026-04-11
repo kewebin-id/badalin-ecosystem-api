@@ -1,7 +1,20 @@
 import { ESubmissionRoutes, EVisaRoutes, validationMessage } from '@/shared/constants';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { response } from '@/shared/utils/rest-api/response';
-import { Body, Controller, Get, HttpStatus, Inject, Logger, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Inject,
+  Logger,
+  Param,
+  Post,
+  Put,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { PaymentStatus } from '@prisma/client';
 import { Response } from 'express';
 import { CreateVisaSubmissionDto } from '../dto/submission.dto';
@@ -20,7 +33,7 @@ export class TransactionController implements VisaSubmissionTransactionControlle
     @Inject('IVisaSubmissionRepository')
     private readonly repository: IVisaSubmissionRepository,
   ) {}
- 
+
   @Get()
   async findAll(
     @Query('page') page: number = 1,
@@ -49,11 +62,7 @@ export class TransactionController implements VisaSubmissionTransactionControlle
   }
 
   @Get(':id')
-  async findOne(
-    @Param('id') id: string,
-    @UserContext() ctx: IUserContext,
-    @Res() res: Response,
-  ): Promise<Response> {
+  async findOne(@Param('id') id: string, @UserContext() ctx: IUserContext, @Res() res: Response): Promise<Response> {
     try {
       const result = await this.submitVisaUseCase.getSubmission(id, ctx);
       if (!result) {

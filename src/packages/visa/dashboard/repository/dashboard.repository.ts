@@ -1,8 +1,7 @@
+import { clientDb } from '@/shared/utils';
 import { Injectable } from '@nestjs/common';
 import { VisaSubmission } from '@prisma/client';
 import { IDashboardRepository } from '../ports/i.repository';
-import { clientDb } from '@/shared/utils';
-import { globalLogger as Logger } from '@/shared/utils';
 
 @Injectable()
 export class DashboardRepository implements IDashboardRepository {
