@@ -1,8 +1,8 @@
-import { IVisaSubmissionRepository } from '../ports';
-import { VisaSubmissionEntity } from '../domain/submission.entity';
-import { PaymentStatus, VerifyStatus, Pilgrim, Agency, Prisma, UserRole } from '@prisma/client';
 import { clientDb } from '@/shared/utils/db';
 import { IUserContext } from '@/shared/utils/rest-api/types';
+import { Agency, PaymentStatus, Pilgrim, Prisma, UserRole, VerifyStatus } from '@prisma/client';
+import { VisaSubmissionEntity } from '../domain/submission.entity';
+import { IVisaSubmissionRepository } from '../ports';
 
 export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository {
   private readonly db = clientDb;
@@ -37,6 +37,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
             flightDate: f.flightDate,
             eta: f.eta,
             etd: f.etd,
+            imageUrls: f.imageUrls,
             createdBy: data.createdBy!,
           })),
         },
@@ -48,6 +49,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
             checkOut: h.checkOut,
             city: h.city,
             roomType: h.roomType,
+            imageUrls: h.imageUrls,
             createdBy: data.createdBy!,
           })),
         },
@@ -61,6 +63,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
             to: t.to,
             totalVehicle: t.totalVehicle,
             totalH: t.totalH,
+            imageUrls: t.imageUrls || [],
             createdBy: data.createdBy!,
           })),
         },
@@ -160,23 +163,26 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
       },
     });
   }
- 
+
   async findAll(
     params: { page?: number; limit?: number; search?: string },
     ctx: IUserContext,
   ): Promise<{ data: VisaSubmissionEntity[]; total: number }> {
     const { page = 1, limit = 10, search = '' } = params;
     const skip = (page - 1) * limit;
- 
+
     const where: Prisma.VisaSubmissionWhereInput = {
       ...this.getQueryFilter(ctx),
       ...(search
         ? {
-            OR: [{ id: { contains: search, mode: 'insensitive' } }, { agencySlug: { contains: search, mode: 'insensitive' } }],
+            OR: [
+              { id: { contains: search, mode: 'insensitive' } },
+              { agencySlug: { contains: search, mode: 'insensitive' } },
+            ],
           }
         : {}),
     };
- 
+
     const [total, submissions] = await Promise.all([
       this.db.visaSubmission.count({ where }),
       this.db.visaSubmission.findMany({
@@ -192,7 +198,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
         },
       }),
     ]);
- 
+
     return {
       total,
       data: submissions.map(
@@ -205,7 +211,12 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
     };
   }
 
-  async update(id: string, data: Partial<VisaSubmissionEntity>, memberIds: string[], ctx: IUserContext): Promise<VisaSubmissionEntity> {
+  async update(
+    id: string,
+    data: Partial<VisaSubmissionEntity>,
+    memberIds: string[],
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
     const exists = await this.findById(id, ctx);
     if (!exists) throw new Error('Visa submission not found or access denied');
 
@@ -235,6 +246,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
               flightDate: f.flightDate,
               eta: f.eta,
               etd: f.etd,
+              imageUrls: f.imageUrls,
               createdBy: ctx.id,
             })),
           },
@@ -246,6 +258,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
               checkOut: h.checkOut,
               city: h.city,
               roomType: h.roomType,
+              imageUrls: h.imageUrls,
               createdBy: ctx.id,
             })),
           },
@@ -259,6 +272,7 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
               to: t.to,
               totalVehicle: t.totalVehicle,
               totalH: t.totalH,
+              imageUrls: t.imageUrls || [],
               createdBy: ctx.id,
             })),
           },
