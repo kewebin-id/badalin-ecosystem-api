@@ -19,4 +19,5 @@ export interface IVisaSubmissionRepository {
     params: { page?: number; limit?: number; search?: string },
     ctx: IUserContext,
   ) => Promise<{ data: VisaSubmissionEntity[]; total: number }>;
+  update: (id: string, data: Partial<VisaSubmissionEntity>, memberIds: string[], ctx: IUserContext) => Promise<VisaSubmissionEntity>;
 }
