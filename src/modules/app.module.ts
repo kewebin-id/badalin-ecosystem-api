@@ -12,6 +12,7 @@ import {
   PaymentModule,
   PilgrimModule,
   VisaSubmissionModule,
+  AgencyModule,
 } from './visa';
 
 @Module({
@@ -26,6 +27,7 @@ import {
     PaymentModule,
     DocumentModule,
     DashboardModule,
+    AgencyModule,
     UploadModule,
     ScheduleModule.forRoot(),
   ],
