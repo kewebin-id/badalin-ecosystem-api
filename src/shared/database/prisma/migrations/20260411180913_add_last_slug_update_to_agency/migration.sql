@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "agencies" ADD COLUMN     "last_slug_update" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
