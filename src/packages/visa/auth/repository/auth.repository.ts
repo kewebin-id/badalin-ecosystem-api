@@ -13,7 +13,7 @@ export class PrismaAuthRepository implements IAuthRepository {
         where: {
           OR: [{ email: identifier }, { phoneNumber: identifier }],
         },
-        include: { agency: true },
+        include: { agency: true, pilgrimProfile: true },
       });
     } catch (error) {
       Logger.error('Error in findByIdentifier:', error);

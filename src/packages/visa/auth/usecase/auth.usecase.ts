@@ -112,6 +112,8 @@ export class AuthUseCase implements IAuthUseCase {
 
       const token = this.jwtService.sign(payload);
 
+      const photoUrl = user.photoUrl || user.pilgrimProfile?.photoUrl || null;
+
       return {
         data: {
           user: {
@@ -120,7 +122,7 @@ export class AuthUseCase implements IAuthUseCase {
             phoneNumber: user.phoneNumber || '',
             fullName: user.fullName,
             role: user.role,
-            photoUrl: user.photoUrl,
+            photoUrl: photoUrl,
             agency: user.agency
               ? {
                   name: user.agency.name,

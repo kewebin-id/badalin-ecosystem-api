@@ -1,7 +1,7 @@
-import { User, Prisma } from '@prisma/client';
-import { CheckUserDto, RegisterDto } from '../dto/auth.dto';
+import { Prisma, User } from '@prisma/client';
+import { RegisterDto } from '../dto/auth.dto';
 
-export type UserWithAgency = Prisma.UserGetPayload<{ include: { agency: true } }>;
+export type UserWithAgency = Prisma.UserGetPayload<{ include: { agency: true; pilgrimProfile: true } }>;
 
 export interface IAuthRepository {
   findByIdentifier: (identifier: string) => Promise<UserWithAgency | null>;
