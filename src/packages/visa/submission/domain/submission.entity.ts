@@ -9,6 +9,7 @@ export class FlightManifestEntity {
   flightDate: Date;
   eta: Date;
   etd: Date;
+  imageUrls?: string[];
   createdAt?: Date;
   createdBy?: string;
   updatedAt?: Date;
@@ -35,6 +36,7 @@ export class HotelManifestEntity {
   checkOut: Date;
   city: HotelCity;
   roomType: RoomType;
+  imageUrls?: string[];
   createdAt?: Date;
   createdBy?: string;
   updatedAt?: Date;
@@ -63,6 +65,7 @@ export class TransportationManifestEntity {
   to?: string | null;
   totalVehicle: number;
   totalH?: number | null;
+  imageUrls?: string[];
   createdAt?: Date;
   createdBy?: string;
   updatedAt?: Date;
