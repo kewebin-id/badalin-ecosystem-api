@@ -204,4 +204,77 @@ export class PrismaVisaSubmissionRepository implements IVisaSubmissionRepository
       ),
     };
   }
+
+  async update(id: string, data: Partial<VisaSubmissionEntity>, memberIds: string[], ctx: IUserContext): Promise<VisaSubmissionEntity> {
+    const exists = await this.findById(id, ctx);
+    if (!exists) throw new Error('Visa submission not found or access denied');
+
+    return await this.db.$transaction(async (tx) => {
+      // 1. Clear related manifests to be recreated
+      await tx.flightManifest.deleteMany({ where: { submissionId: id } });
+      await tx.hotelManifest.deleteMany({ where: { submissionId: id } });
+      await tx.transportationManifest.deleteMany({ where: { submissionId: id } });
+
+      // 2. Update core submission
+      const submission = await tx.visaSubmission.update({
+        where: { id },
+        data: {
+          totalAmount: data.totalAmount!,
+          resultSnapshot: (data.resultSnapshot as Prisma.InputJsonValue) ?? Prisma.DbNull,
+          rawdahMenTime: data.rawdahMenTime,
+          rawdahWomenTime: data.rawdahWomenTime,
+          notes: data.notes,
+          members: {
+            set: memberIds.map((id) => ({ id })),
+          },
+          flights: {
+            create: data.flights?.map((f) => ({
+              type: f.type,
+              flightNo: f.flightNo,
+              carrier: f.carrier,
+              flightDate: f.flightDate,
+              eta: f.eta,
+              etd: f.etd,
+              createdBy: ctx.id,
+            })),
+          },
+          hotels: {
+            create: data.hotels?.map((h) => ({
+              name: h.name,
+              resvNo: h.resvNo,
+              checkIn: h.checkIn,
+              checkOut: h.checkOut,
+              city: h.city,
+              roomType: h.roomType,
+              createdBy: ctx.id,
+            })),
+          },
+          transportations: {
+            create: data.transportations?.map((t) => ({
+              type: t.type,
+              company: t.company,
+              time: t.time,
+              date: t.date,
+              from: t.from,
+              to: t.to,
+              totalVehicle: t.totalVehicle,
+              totalH: t.totalH,
+              createdBy: ctx.id,
+            })),
+          },
+        },
+        include: {
+          members: true,
+          flights: true,
+          hotels: true,
+          transportations: true,
+        },
+      });
+
+      return new VisaSubmissionEntity({
+        ...submission,
+        totalAmount: Number(submission.totalAmount),
+      });
+    });
+  }
 }

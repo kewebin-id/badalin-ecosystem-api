@@ -17,4 +17,9 @@ export interface IVisaSubmissionUseCase {
     params: { page?: number; limit?: number; search?: string },
     ctx: IUserContext,
   ) => Promise<{ data: VisaSubmissionEntity[]; total: number }>;
+  update: (
+    id: string,
+    ctx: IUserContext,
+    dto: CreateVisaSubmissionDto,
+  ) => Promise<{ data?: VisaSubmissionEntity; error?: { message: string; code: number } }>;
 }
