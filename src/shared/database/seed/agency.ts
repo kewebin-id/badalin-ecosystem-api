@@ -18,7 +18,10 @@ const main = async () => {
     create: {
       name: 'Badalin',
       slug: slug,
-      visaPrice: 0,
+      visaPrice: 2500000,
+      bankAccountName: 'Badalin Agency',
+      bankAccountNumber: '1234567890',
+      bankName: 'BCA',
       isActive: true,
       createdBy: 'SYSTEM',
     },
