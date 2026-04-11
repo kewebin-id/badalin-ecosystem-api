@@ -105,6 +105,7 @@ model User {
   deletedAt            DateTime?        @map("deleted_at")
   deletedBy            String?          @map("deleted_by")
   submissions          VisaSubmission[] @relation("LeaderSubmissions")
+  pilgrimProfile       Pilgrim?         @relation("UserSelf")
 
   @@map("users")
 }
@@ -126,6 +127,8 @@ model Pilgrim {
   photoUrl       String           @map("photo_url")
   ktpUrl         String           @map("ktp_url")
   passportUrl    String           @map("passport_url")
+  userId         String?          @unique @map("user_id")
+  user           User?            @relation("UserSelf", fields: [userId], references: [id])
   agency         Agency           @relation(fields: [agencySlug], references: [slug])
   submissions    VisaSubmission[] @relation("SubmissionMembers")
   createdAt      DateTime         @default(now()) @map("created_at")
