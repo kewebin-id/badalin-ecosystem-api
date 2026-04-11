@@ -3,48 +3,46 @@ import { response } from '@/shared/utils/rest-api/response';
 import { Body, Controller, HttpStatus, Inject, Logger, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
 import {
-  CheckUserDto,
-  ForgotPasswordDto,
-  LoginDto,
-  RegisterDto,
-  ResetPasswordDto,
-  VerifyResetTokenDto,
-} from '../dto/auth.dto';
-import { IAuthUseCase } from '../ports/i.usecase';
+  ProviderForgotPasswordDto,
+  ProviderLoginDto,
+  ProviderRegisterDto,
+  ProviderResetPasswordDto,
+  ProviderVerifyTokenDto,
+} from '../dto/provider-auth.dto';
+import { IProviderAuthUseCase } from '../ports/i-provider-auth.usecase';
 
-@Controller(EVisaRoutes.AUTH)
-export class AuthController {
+@Controller(EVisaRoutes.PROVIDER_AUTH)
+export class ProviderAuthController {
   constructor(
-    @Inject('IAuthUseCase')
-    private readonly authUseCase: IAuthUseCase,
+    @Inject('IProviderAuthUseCase')
+    private readonly authUseCase: IProviderAuthUseCase,
   ) {}
 
-  @Post(EAuthRoutes.CHECK_USER)
-  async checkUser(@Body() dto: CheckUserDto, @Res() res: Response) {
+  @Post(EAuthRoutes.VERIFY_INVITATION_TOKEN)
+  async verifyToken(@Body() dto: ProviderVerifyTokenDto, @Res() res: Response) {
     try {
-      const responseData = await this.authUseCase.checkUser(dto);
+      const responseData = await this.authUseCase.verifyInvitationToken(dto.token);
       if (responseData.error) {
-        return response[responseData.error.code || HttpStatus.INTERNAL_SERVER_ERROR](res, {
-          message: responseData.error.message || 'Failed to check user',
+        return response[responseData.error.code || HttpStatus.BAD_REQUEST](res, {
+          message: responseData.error.message || 'Token verification failed',
         });
       }
       return response[HttpStatus.OK](res, {
-        message: 'Success check user',
-        data: { exists: responseData.data },
+        message: 'Token is valid',
+        data: responseData.data,
       });
     } catch (error) {
-      Logger.error(error instanceof Error ? error.message : 'Error in checkUser');
-      return response[HttpStatus.INTERNAL_SERVER_ERROR](res, {
-        message: 'Failed to check user',
+      Logger.error(error instanceof Error ? error.message : 'Error in verifyToken');
+      return response[HttpStatus.BAD_REQUEST](res, {
+        message: 'Token verification failed',
       });
     }
   }
 
   @Post(EAuthRoutes.REGISTER)
-  async register(@Body() dto: RegisterDto, @Res() res: Response) {
+  async register(@Body() dto: ProviderRegisterDto, @Res() res: Response) {
     try {
-      const agencySlug = res.req.cookies?.['agency_slug'];
-      const responseData = await this.authUseCase.register(dto, agencySlug);
+      const responseData = await this.authUseCase.register(dto);
       if (responseData.error) {
         return response[responseData.error.code || HttpStatus.INTERNAL_SERVER_ERROR](res, {
           message: responseData.error.message || 'Registration failed',
@@ -64,9 +62,9 @@ export class AuthController {
   }
 
   @Post(EAuthRoutes.LOGIN)
-  async login(@Body() dto: LoginDto, @Res() res: Response) {
+  async login(@Body() dto: ProviderLoginDto, @Res() res: Response) {
     try {
-      const responseData = await this.authUseCase.login(dto);
+      const responseData = await this.authUseCase.login(dto, true);
       if (responseData.error) {
         return response[responseData.error.code || HttpStatus.UNAUTHORIZED](res, {
           message: responseData.error.message || 'Login failed',
@@ -85,7 +83,7 @@ export class AuthController {
   }
 
   @Post(EAuthRoutes.FORGOT_PASSWORD)
-  async forgotPassword(@Body() dto: ForgotPasswordDto, @Res() res: Response) {
+  async forgotPassword(@Body() dto: ProviderForgotPasswordDto, @Res() res: Response) {
     try {
       const responseData = await this.authUseCase.forgotPassword(dto);
       if (responseData.error) {
@@ -104,28 +102,8 @@ export class AuthController {
     }
   }
 
-  @Post(EAuthRoutes.VERIFY_RESET_TOKEN)
-  async verifyResetToken(@Body() dto: VerifyResetTokenDto, @Res() res: Response) {
-    try {
-      const responseData = await this.authUseCase.verifyResetToken(dto);
-      if (responseData.error) {
-        return response[responseData.error.code || HttpStatus.BAD_REQUEST](res, {
-          message: responseData.error.message || 'Invalid or expired token',
-        });
-      }
-      return response[HttpStatus.OK](res, {
-        message: 'Token is valid',
-      });
-    } catch (error) {
-      Logger.error(error instanceof Error ? error.message : 'Error in verifyResetToken');
-      return response[HttpStatus.BAD_REQUEST](res, {
-        message: 'Invalid or expired token',
-      });
-    }
-  }
-
   @Post(EAuthRoutes.RESET_PASSWORD)
-  async resetPassword(@Body() dto: ResetPasswordDto, @Res() res: Response) {
+  async resetPassword(@Body() dto: ProviderResetPasswordDto, @Res() res: Response) {
     try {
       const responseData = await this.authUseCase.resetPassword(dto);
       if (responseData.error) {
