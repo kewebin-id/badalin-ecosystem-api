@@ -163,7 +163,7 @@ export class ProviderAuthUseCase implements IProviderAuthUseCase {
       await this.repository.updateResetToken(user.id, rawToken, expiresAt, user.id);
 
       if (user.email) {
-        const resetLink = `${process.env.FRONTEND_URL || 'https://badalin.com'}${process.env.FRONTEND_RESET_PASSWORD_ROUTE}?token=${rawToken}`;
+        const resetLink = `${process.env.FRONTEND_URL || 'https://badalin.com'}${process.env.FRONTEND_PROVIDER_RESET_PASSWORD_ROUTE}?token=${rawToken}`;
         sendResetPasswordEmail(user.email, resetLink).catch((err) => {
           Logger.error('Failed to send reset password email', err.message, 'provider_auth_usecase.ts - forgotPassword');
         });
