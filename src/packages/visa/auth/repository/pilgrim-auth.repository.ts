@@ -1,10 +1,11 @@
 import { globalLogger as Logger } from '@/shared/utils';
 import { clientDb } from '@/shared/utils/db';
 import { User, UserRole } from '@prisma/client';
-import { RegisterDto } from '../dto/auth.dto';
-import { IAuthRepository, UserWithAgency } from '../ports/i.repository';
+import { PilgrimRegisterDto } from '../dto/pilgrim-auth.dto';
+import { IPilgrimAuthRepository } from '../ports/i-pilgrim-auth.repository';
+import { UserWithAgency } from '../ports/types';
 
-export class PrismaAuthRepository implements IAuthRepository {
+export class PrismaPilgrimAuthRepository implements IPilgrimAuthRepository {
   private readonly db = clientDb;
 
   findByIdentifier = async (identifier: string): Promise<UserWithAgency | null> => {
@@ -16,12 +17,12 @@ export class PrismaAuthRepository implements IAuthRepository {
         include: { agency: true, pilgrimProfile: true },
       });
     } catch (error) {
-      Logger.error('Error in findByIdentifier:', error);
+      Logger.error('Error in findByIdentifier (Pilgrim):', error);
       throw error;
     }
   };
 
-  create = async (dto: RegisterDto, agencySlug?: string, createdBy?: string): Promise<User> => {
+  create = async (dto: PilgrimRegisterDto, agencySlug?: string, createdBy?: string): Promise<User> => {
     try {
       if (agencySlug) {
         const agency = await this.db.agency.findUnique({
@@ -45,7 +46,7 @@ export class PrismaAuthRepository implements IAuthRepository {
       };
       return await this.db.user.create({ data });
     } catch (error) {
-      Logger.error('Error in create user:', error);
+      Logger.error('Error in create user (Pilgrim):', error);
       throw error;
     }
   };
@@ -66,7 +67,7 @@ export class PrismaAuthRepository implements IAuthRepository {
         },
       });
     } catch (error) {
-      Logger.error('Error in updateResetToken:', error);
+      Logger.error('Error in updateResetToken (Pilgrim):', error);
       throw error;
     }
   };
@@ -77,18 +78,14 @@ export class PrismaAuthRepository implements IAuthRepository {
         where: { resetPasswordToken: token },
       });
     } catch (error) {
-      Logger.error('Error in findByResetToken:', error);
+      Logger.error('Error in findByResetToken (Pilgrim):', error);
       throw error;
     }
   };
 
   updatePassword = async (userId: string, targetPassword: string, updatedBy?: string): Promise<void> => {
     try {
-      Logger.debug(
-        `Updating password for user ${userId}. Hash prefix: ${targetPassword.substring(0, 10)}...`,
-        'AuthRepository',
-      );
-      const result = await this.db.user.update({
+      await this.db.user.update({
         where: { id: userId },
         data: {
           password: targetPassword,
@@ -97,12 +94,8 @@ export class PrismaAuthRepository implements IAuthRepository {
           updatedBy: updatedBy || null,
         },
       });
-      Logger.info(
-        `Successfully updated password for user ${userId}. Database reported ID: ${result.id}`,
-        'AuthRepository',
-      );
     } catch (error) {
-      Logger.error('Error in updatePassword:', error);
+      Logger.error('Error in updatePassword (Pilgrim):', error);
       throw error;
     }
   };

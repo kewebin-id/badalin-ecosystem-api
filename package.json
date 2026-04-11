@@ -31,7 +31,7 @@
     "prisma:deploy": "npx prisma migrate deploy --schema=src/shared/database/prisma/schema.prisma",
     "prisma:format": "npx prisma format --schema=src/shared/database/prisma/schema.prisma",
     "prisma:push": "npx prisma db push --accept-data-loss && npx prisma generate",
-    "prisma:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' src/shared/database/seed/agency.ts"
+    "prisma:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' src/shared/database/seed/index.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

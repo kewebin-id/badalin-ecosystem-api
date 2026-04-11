@@ -1,12 +1,12 @@
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
-export class CheckUserDto {
+export class PilgrimCheckUserDto {
   @IsString()
   @IsNotEmpty()
   identifier: string;
 }
 
-export class RegisterDto {
+export class PilgrimRegisterDto {
   @IsString()
   @IsNotEmpty()
   fullName: string;
@@ -29,7 +29,7 @@ export class RegisterDto {
   phoneNumber?: string;
 }
 
-export class LoginDto {
+export class PilgrimLoginDto {
   @IsString()
   @IsNotEmpty()
   identifier: string;
@@ -39,19 +39,19 @@ export class LoginDto {
   password: string;
 }
 
-export class ForgotPasswordDto {
+export class PilgrimForgotPasswordDto {
   @IsString()
   @IsNotEmpty()
   identifier: string;
 }
 
-export class VerifyResetTokenDto {
+export class PilgrimVerifyResetTokenDto {
   @IsString()
   @IsNotEmpty()
   token: string;
 }
 
-export class ResetPasswordDto {
+export class PilgrimResetPasswordDto {
   @IsString()
   @IsNotEmpty()
   token: string;

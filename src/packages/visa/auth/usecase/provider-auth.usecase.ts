@@ -1,70 +1,46 @@
-import {
-  IUsecaseResponse,
-  globalLogger as Logger,
-  sendAccountActiveEmail,
-  sendResetPasswordEmail,
-} from '@/shared/utils';
-import { ConflictException, HttpException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { IUsecaseResponse, globalLogger as Logger, sendResetPasswordEmail } from '@/shared/utils';
+import { HttpException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import {
-  CheckUserDto,
-  ForgotPasswordDto,
-  LoginDto,
-  RegisterDto,
-  ResetPasswordDto,
-  VerifyResetTokenDto,
-} from '../dto/auth.dto';
-import { IAuthRepository } from '../ports/i.repository';
-import { IAuthUseCase } from '../ports/i.usecase';
+  ProviderForgotPasswordDto,
+  ProviderLoginDto,
+  ProviderRegisterDto,
+  ProviderResetPasswordDto,
+} from '../dto/provider-auth.dto';
+import { IProviderAuthRepository } from '../ports/i-provider-auth.repository';
+import { IProviderAuthUseCase } from '../ports/i-provider-auth.usecase';
 
 @Injectable()
-export class AuthUseCase implements IAuthUseCase {
+export class ProviderAuthUseCase implements IProviderAuthUseCase {
   constructor(
     private readonly jwtService: JwtService,
-    @Inject('IAuthRepository')
-    private readonly repository: IAuthRepository,
+    @Inject('IProviderAuthRepository')
+    private readonly repository: IProviderAuthRepository,
   ) {}
 
-  checkUser = async (dto: CheckUserDto): Promise<IUsecaseResponse<boolean>> => {
+  register = async (dto: ProviderRegisterDto): Promise<IUsecaseResponse<User>> => {
     try {
-      const user = await this.repository.findByIdentifier(dto.identifier);
-      return { data: !!user };
-    } catch (error) {
-      return {
-        error: {
-          message: error instanceof Error ? error.message : 'Failed to check user',
-          code: error instanceof HttpException ? error.getStatus() : 500,
-        },
-      };
-    }
-  };
+      const user = await this.repository.findByInvitationToken(dto.invitationToken);
 
-  register = async (dto: RegisterDto, agencySlug?: string): Promise<IUsecaseResponse<User>> => {
-    try {
-      const existingUser = await this.repository.findByIdentifier(dto.identifier);
+      if (!user) {
+        throw new UnauthorizedException('Invalid invitation token');
+      }
 
-      if (existingUser) {
-        throw new ConflictException('User already exists');
+      if (!user.invitationExpires || user.invitationExpires < new Date()) {
+        throw new UnauthorizedException('Invitation token has expired');
       }
 
       const hashedPassword = await bcrypt.hash(dto.password, 10);
-      const data = {
-        ...dto,
-        fullName: dto.fullName,
+      const updatedUser = await this.repository.updateProviderAccount(user.id, {
         password: hashedPassword,
-      };
-      const user = await this.repository.create(data, agencySlug || process.env.DEFAULT_AGENCY, 'SYSTEM_REGISTRATION');
+        fullName: dto.fullName,
+        role: 'PROVIDER',
+      });
 
-      if (user.email) {
-        sendAccountActiveEmail(user.email, dto.fullName).catch((err) => {
-          Logger.error('Failed to send account activation email', err.message, 'auth.usecase.ts - register');
-        });
-      }
-
-      return { data: user };
+      return { data: updatedUser };
     } catch (error) {
       return {
         error: {
@@ -75,8 +51,35 @@ export class AuthUseCase implements IAuthUseCase {
     }
   };
 
+  verifyInvitationToken = async (token: string): Promise<IUsecaseResponse<{ email: string }>> => {
+    try {
+      const user = await this.repository.findByInvitationToken(token);
+
+      if (!user) {
+        throw new HttpException('Invalid invitation token', HttpStatus.NOT_FOUND);
+      }
+
+      if (!user.invitationExpires || user.invitationExpires < new Date()) {
+        throw new HttpException('Invitation token has expired', HttpStatus.GONE);
+      }
+
+      if (user.role === 'PROVIDER' && user.password !== '') {
+        throw new HttpException('This invitation token has already been used', HttpStatus.CONFLICT);
+      }
+
+      return { data: { email: user.email || '' } };
+    } catch (error) {
+      return {
+        error: {
+          message: error instanceof Error ? error.message : 'Token verification failed',
+          code: error instanceof HttpException ? error.getStatus() : 500,
+        },
+      };
+    }
+  };
+
   login = async (
-    dto: LoginDto,
+    dto: ProviderLoginDto,
   ): Promise<
     IUsecaseResponse<{
       user: {
@@ -102,6 +105,10 @@ export class AuthUseCase implements IAuthUseCase {
         throw new UnauthorizedException('Invalid credentials');
       }
 
+      if (user.role !== 'PROVIDER' && user.role !== 'SUPERADMIN') {
+        throw new UnauthorizedException('Access denied: Unauthorized role');
+      }
+
       const payload = {
         id: user.id,
         email: user.email || '',
@@ -111,7 +118,6 @@ export class AuthUseCase implements IAuthUseCase {
       };
 
       const token = this.jwtService.sign(payload);
-
       const photoUrl = user.photoUrl || user.pilgrimProfile?.photoUrl || null;
 
       return {
@@ -144,7 +150,7 @@ export class AuthUseCase implements IAuthUseCase {
     }
   };
 
-  forgotPassword = async (dto: ForgotPasswordDto): Promise<IUsecaseResponse<boolean>> => {
+  forgotPassword = async (dto: ProviderForgotPasswordDto): Promise<IUsecaseResponse<boolean>> => {
     try {
       const user = await this.repository.findByIdentifier(dto.identifier);
       if (!user) {
@@ -159,7 +165,7 @@ export class AuthUseCase implements IAuthUseCase {
       if (user.email) {
         const resetLink = `${process.env.FRONTEND_URL || 'https://badalin.com'}${process.env.FRONTEND_RESET_PASSWORD_ROUTE}?token=${rawToken}`;
         sendResetPasswordEmail(user.email, resetLink).catch((err) => {
-          Logger.error('Failed to send reset password email', err.message, 'auth.usecase.ts - forgotPassword');
+          Logger.error('Failed to send reset password email', err.message, 'provider_auth_usecase.ts - forgotPassword');
         });
       }
 
@@ -174,40 +180,14 @@ export class AuthUseCase implements IAuthUseCase {
     }
   };
 
-  verifyResetToken = async (dto: VerifyResetTokenDto): Promise<IUsecaseResponse<boolean>> => {
-    try {
-      const user = await this.repository.findByResetToken(dto.token);
-      if (!user || !user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
-        throw new HttpException('Invalid or expired reset token', 400);
-      }
-      return { data: true };
-    } catch (error) {
-      return {
-        error: {
-          message: error instanceof Error ? error.message : 'Verify token failed',
-          code: error instanceof HttpException ? error.getStatus() : 500,
-        },
-      };
-    }
-  };
-
-  resetPassword = async (dto: ResetPasswordDto): Promise<IUsecaseResponse<boolean>> => {
+  resetPassword = async (dto: ProviderResetPasswordDto): Promise<IUsecaseResponse<boolean>> => {
     try {
       const user = await this.repository.findByResetToken(dto.token);
       if (!user || !user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
         throw new HttpException('Invalid or expired reset token', 400);
       }
 
-      Logger.debug(
-        `Resetting password for user ${user.id}. Raw password length: ${dto.password.length}`,
-        'AuthUseCase',
-      );
       const hashedPassword = await bcrypt.hash(dto.password, 10);
-      Logger.debug(
-        `Hashed password for user ${user.id}. Hash prefix: ${hashedPassword.substring(0, 10)}...`,
-        'AuthUseCase',
-      );
-
       await this.repository.updatePassword(user.id, hashedPassword, user.id);
 
       return { data: true };

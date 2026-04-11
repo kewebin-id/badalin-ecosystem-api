@@ -12,3 +12,6 @@ generated/prisma
 
 # Docs
 *CURL.md
+
+# seeder
+src/shared/database/seed*
