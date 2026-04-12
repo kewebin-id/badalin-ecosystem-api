@@ -1,0 +1,59 @@
+import { FlightType, HotelCity, PaymentStatus, RoomType, TransportType, VerifyStatus } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/client';
+
+export class FlightManifestEntity {
+  id: string;
+  type: FlightType;
+  flightNo: string;
+  carrier: string;
+  flightDate: Date;
+  eta: Date;
+  etd: Date;
+  imageUrls: string[];
+}
+
+export class HotelManifestEntity {
+  id: string;
+  name: string;
+  resvNo: string;
+  checkIn: Date;
+  checkOut: Date;
+  city: HotelCity;
+  roomType: RoomType;
+  imageUrls: string[];
+}
+
+export class TransportationManifestEntity {
+  id: string;
+  type: TransportType;
+  company: string;
+  time: string;
+  date: Date;
+  from: string | null;
+  to: string | null;
+  totalVehicle: number;
+  totalH: number | null;
+  imageUrls: string[];
+}
+
+export class PilgrimEntity {
+  id: string;
+  fullName: string;
+  passportNumber: string;
+}
+
+export class VisaSubmissionEntity {
+  id: string;
+  leaderId: string;
+  agencySlug: string;
+  status: VerifyStatus;
+  verifyStatus: VerifyStatus;
+  paymentStatus: PaymentStatus;
+  totalAmount: Decimal;
+  rejectionReason: string | null;
+
+  flights?: FlightManifestEntity[];
+  hotels?: HotelManifestEntity[];
+  transportations?: TransportationManifestEntity[];
+  members?: PilgrimEntity[];
+}

@@ -1,22 +1,24 @@
-import { DocumentController } from '@/packages/visa/document/controller/document.controller';
-import { PrismaDocumentRepository } from '@/packages/visa/document/repository/document.repository';
-import { DocumentUseCase } from '@/packages/visa/document/usecase/document.usecase';
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth.module';
+import { JwtModule } from '@nestjs/jwt';
+import { PilgrimDocumentController, PilgrimDocumentUseCase, PilgrimDocumentRepository } from '@/packages/visa/pilgrim/document';
 
 @Module({
-  imports: [AuthModule],
-  controllers: [DocumentController],
+  imports: [
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'secret',
+      signOptions: { expiresIn: '1d' },
+    }),
+  ],
+  controllers: [PilgrimDocumentController],
   providers: [
     {
-      provide: 'IDocumentUseCase',
-      useClass: DocumentUseCase,
+      provide: 'IDocumentRepository',
+      useClass: PilgrimDocumentRepository,
     },
     {
-      provide: 'IDocumentRepository',
-      useClass: PrismaDocumentRepository,
+      provide: 'IDocumentUseCase',
+      useClass: PilgrimDocumentUseCase,
     },
   ],
-  exports: ['IDocumentUseCase'],
 })
 export class DocumentModule {}

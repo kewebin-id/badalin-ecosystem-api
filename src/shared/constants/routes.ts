@@ -2,31 +2,30 @@ export enum EPrefix {
   V1 = '/api/v1',
 }
 
-export enum EServiceRoutes {
-  VISA = `${EPrefix.V1}/visa`,
+export enum EActorPrefix {
+  ADMIN = `${EPrefix.V1}/admin`,
+  PILGRIM = `${EPrefix.V1}`,
+  PROVIDER = `${EPrefix.V1}/:slug`,
 }
 
 export enum EVisaRoutes {
-  AUTH = `${EServiceRoutes.VISA}/auth`,
-  PILGRIMS = `${EServiceRoutes.VISA}/pilgrims`,
-  TRANSACTIONS = `${EServiceRoutes.VISA}/transactions`,
-  DOCUMENTS = `${EServiceRoutes.VISA}/documents`,
-  DASHBOARD = `${EServiceRoutes.VISA}/dashboard`,
+  // Admin Features
+  ADMIN_AUTH = `${EActorPrefix.ADMIN}/auth`,
+  ADMIN_INVITATION = `${EActorPrefix.ADMIN}/invitation`,
+  
+  // Provider Features
+  PROVIDER_AUTH = `${EActorPrefix.PROVIDER}/auth`,
+  PROVIDER_AGENCY = `${EActorPrefix.PROVIDER}/agency`,
+  PROVIDER_VERIFICATION = `${EActorPrefix.PROVIDER}/verification`,
+  PROVIDER_MANIFEST = `${EActorPrefix.PROVIDER}/manifest`,
+  
+  // Pilgrim Features
+  PILGRIM_AUTH = `${EActorPrefix.PILGRIM}/auth`,
+  PILGRIM_SUBMISSION = `${EActorPrefix.PILGRIM}/submission`,
+  PILGRIM_DASHBOARD = `${EActorPrefix.PILGRIM}/dashboard`,
+  PILGRIM_DOCUMENT = `${EActorPrefix.PILGRIM}/document`,
+  PILGRIM_PROFILE = `${EActorPrefix.PILGRIM}/profile`,
   UPLOAD = `${EPrefix.V1}/upload`,
-  SUBMISSIONS = `${EServiceRoutes.VISA}/submissions`,
-  PILGRIM_AUTH = `${EPrefix.V1}/auth`,
-  PROVIDER_AUTH = `${EPrefix.V1}/p/auth`,
-  ADMIN = `${EPrefix.V1}/admin`,
-}
-
-export enum ESubmissionRoutes {
-  SUBMIT = '/submit',
-  UPLOAD_PROOF = '/:id/upload-proof',
-  PREVIEW = '/preview',
-}
-
-export enum EDocumentRoutes {
-  DOWNLOAD_VISA = '/visa/:transactionId',
 }
 
 export enum EAuthRoutes {
@@ -40,6 +39,21 @@ export enum EAuthRoutes {
   GENERATE_INVITATION = '/generate-invitation',
 }
 
-export enum EDashboardRoutes {
-  HISTORY = '/history',
+export enum ESubmissionRoutes {
+  LIST = '/',
+  DETAIL = '/:id',
+  SUBMIT = '/submit',
+  PREVIEW = '/preview',
+  VERIFY_PAYMENT = '/:id/verify-payment',
+  REVIEW = '/:id/review',
+}
+
+export enum EManifestRoutes {
+  FLIGHT = '/:id/flight',
+  HOTEL = '/:id/hotel',
+  TRANSPORT = '/:id/transport',
+}
+
+export enum EDocumentRoutes {
+  DOWNLOAD_VISA = '/visa/:transactionId',
 }

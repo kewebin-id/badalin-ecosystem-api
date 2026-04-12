@@ -7,6 +7,8 @@ export const UserContext = createParamDecorator((data: unknown, ctx: ExecutionCo
 
   return {
     id: user.id,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
     role: user.role,
     agencySlug: user.agencySlug,
   };

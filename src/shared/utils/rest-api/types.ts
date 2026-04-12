@@ -80,6 +80,8 @@ export interface IPaginationResponse<T> {
 
 export interface IUserContext {
   id: string;
+  email: string;
+  phoneNumber: string;
   role: string;
   agencySlug: string;
 }

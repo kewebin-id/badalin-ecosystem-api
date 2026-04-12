@@ -6,13 +6,11 @@ import { ApiKeyGuard } from '../shared/guards/api-key.guard';
 import { AgencyMiddleware } from '../shared/middleware/agency.middleware';
 import { UploadModule } from './upload.module';
 import {
+  AgencyModule,
   AuthModule,
   DashboardModule,
   DocumentModule,
-  PaymentModule,
-  PilgrimModule,
-  VisaSubmissionModule,
-  AgencyModule,
+  SubmissionModule,
 } from './visa';
 
 @Module({
@@ -21,10 +19,8 @@ import {
       isGlobal: true,
       envFilePath: '.env',
     }),
-    VisaSubmissionModule,
+    SubmissionModule,
     AuthModule,
-    PilgrimModule,
-    PaymentModule,
     DocumentModule,
     DashboardModule,
     AgencyModule,

@@ -1,15 +1,10 @@
-import { AdminAuthController } from '@/packages/visa/auth/controller/admin-auth.controller';
-import { PilgrimAuthController } from '@/packages/visa/auth/controller/pilgrim-auth.controller';
-import { ProviderAuthController } from '@/packages/visa/auth/controller/provider-auth.controller';
-import { AdminAuthUseCase } from '@/packages/visa/auth/usecase/admin-auth.usecase';
-import { PilgrimAuthUseCase } from '@/packages/visa/auth/usecase/pilgrim-auth.usecase';
-import { ProviderAuthUseCase } from '@/packages/visa/auth/usecase/provider-auth.usecase';
+import { AdminAuthController, AdminAuthUseCase } from '@/packages/visa/admin/auth';
+import { AdminInvitationController, AdminInvitationUseCase } from '@/packages/visa/admin/invitation';
+import { PilgrimAuthController, PilgrimAuthUseCase, PilgrimAuthRepository } from '@/packages/visa/pilgrim/auth';
+import { ProviderAuthController, ProviderAuthUseCase, ProviderAuthRepository } from '@/packages/visa/provider/auth';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-
-import { PrismaPilgrimAuthRepository } from '@/packages/visa/auth/repository/pilgrim-auth.repository';
-import { PrismaProviderAuthRepository } from '@/packages/visa/auth/repository/provider-auth.repository';
 
 @Module({
   imports: [
@@ -22,7 +17,7 @@ import { PrismaProviderAuthRepository } from '@/packages/visa/auth/repository/pr
       }),
     }),
   ],
-  controllers: [PilgrimAuthController, ProviderAuthController, AdminAuthController],
+  controllers: [PilgrimAuthController, ProviderAuthController, AdminAuthController, AdminInvitationController],
   providers: [
     {
       provide: 'IPilgrimAuthUseCase',
@@ -37,12 +32,16 @@ import { PrismaProviderAuthRepository } from '@/packages/visa/auth/repository/pr
       useClass: AdminAuthUseCase,
     },
     {
+      provide: 'IAdminInvitationUseCase',
+      useClass: AdminInvitationUseCase,
+    },
+    {
       provide: 'IPilgrimAuthRepository',
-      useClass: PrismaPilgrimAuthRepository,
+      useClass: PilgrimAuthRepository,
     },
     {
       provide: 'IProviderAuthRepository',
-      useClass: PrismaProviderAuthRepository,
+      useClass: ProviderAuthRepository,
     },
   ],
   exports: [
@@ -50,6 +49,7 @@ import { PrismaProviderAuthRepository } from '@/packages/visa/auth/repository/pr
     'IPilgrimAuthUseCase',
     'IProviderAuthUseCase',
     'IAdminAuthUseCase',
+    'IAdminInvitationUseCase',
     'IPilgrimAuthRepository',
     'IProviderAuthRepository',
   ],
