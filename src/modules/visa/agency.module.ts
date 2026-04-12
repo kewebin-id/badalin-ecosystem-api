@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { AgencyController } from '@/packages/visa/agency/controller/agency.controller';
-import { AgencyUseCase } from '@/packages/visa/agency/usecase/agency.usecase';
-import { PrismaAgencyRepository } from '@/packages/visa/agency/repository/agency.repository';
-import { PrismaProviderAuthRepository } from '@/packages/visa/auth/repository/provider-auth.repository';
+import { AgencySettingsController, AgencySettingsUseCase, AgencySettingsRepository } from '@/packages/visa/provider/agency-settings';
+import { ProviderAuthRepository } from '@/packages/visa/provider/auth';
 
 @Module({
   imports: [
@@ -12,19 +10,19 @@ import { PrismaProviderAuthRepository } from '@/packages/visa/auth/repository/pr
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [AgencyController],
+  controllers: [AgencySettingsController],
   providers: [
     {
-      provide: 'IAgencyRepository',
-      useClass: PrismaAgencyRepository,
+      provide: 'IAgencySettingsRepository',
+      useClass: AgencySettingsRepository,
     },
     {
-      provide: 'IAgencyUseCase',
-      useClass: AgencyUseCase,
+      provide: 'IAgencySettingsUseCase',
+      useClass: AgencySettingsUseCase,
     },
     {
       provide: 'IProviderAuthRepository',
-      useClass: PrismaProviderAuthRepository,
+      useClass: ProviderAuthRepository,
     },
   ],
 })

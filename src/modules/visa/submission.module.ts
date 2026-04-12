@@ -1,8 +1,6 @@
-import { VisaSubmissionController } from '@/packages/visa/submission/controller/submission.controller';
-import { TransactionController } from '@/packages/visa/submission/controller/transaction.controller';
-import { IVisaSubmissionRepository } from '@/packages/visa/submission/ports/i.repository';
-import { PrismaVisaSubmissionRepository } from '@/packages/visa/submission/repository/submission.repository';
-import { SubmitVisaUseCase } from '@/packages/visa/submission/usecase/submission.usecase';
+import { PilgrimSubmissionUseCase, VisaSubmissionRepository, PaymentRepository, PaymentScheduler } from '@/packages/visa/pilgrim/submission';
+import { VerificationController, VerificationUseCase } from '@/packages/visa/provider/verification';
+import { ManifestController, ManifestUseCase } from '@/packages/visa/provider/manifest';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -13,21 +11,39 @@ import { JwtModule } from '@nestjs/jwt';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [VisaSubmissionController, TransactionController],
+  controllers: [
+    VerificationController,
+    ManifestController,
+  ],
   providers: [
     {
-      provide: PrismaVisaSubmissionRepository,
-      useClass: PrismaVisaSubmissionRepository,
-    },
-    {
       provide: 'IVisaSubmissionRepository',
-      useExisting: PrismaVisaSubmissionRepository,
+      useClass: VisaSubmissionRepository,
     },
     {
-      provide: 'IVisaSubmissionUseCase',
-      useFactory: (repo: IVisaSubmissionRepository) => new SubmitVisaUseCase(repo),
-      inject: ['IVisaSubmissionRepository'],
+      provide: 'IVerificationUseCase',
+      useClass: VerificationUseCase,
     },
+    {
+      provide: 'IManifestUseCase',
+      useClass: ManifestUseCase,
+    },
+    {
+      provide: 'IPilgrimSubmissionUseCase',
+      useClass: PilgrimSubmissionUseCase,
+    },
+    {
+      provide: 'IPaymentRepository',
+      useClass: PaymentRepository,
+    },
+    PaymentScheduler,
+  ],
+  exports: [
+    'IVisaSubmissionRepository',
+    'IVerificationUseCase',
+    'IManifestUseCase',
+    'IPilgrimSubmissionUseCase',
+    'IPaymentRepository',
   ],
 })
-export class VisaSubmissionModule {}
+export class SubmissionModule {}

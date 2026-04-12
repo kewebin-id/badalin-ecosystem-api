@@ -1,32 +1,24 @@
-import { DashboardController } from '@/packages/visa/dashboard/controller/dashboard.controller';
-import { DashboardRepository } from '@/packages/visa/dashboard/repository/dashboard.repository';
-import { DashboardUseCase } from '@/packages/visa/dashboard/usecase/dashboard.usecase';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { PilgrimDashboardController, PilgrimDashboardUseCase, PilgrimDashboardRepository } from '@/packages/visa/pilgrim/dashboard';
 
 @Module({
   imports: [
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'secret',
-        signOptions: { expiresIn: '1d' },
-      }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'secret',
+      signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [DashboardController],
+  controllers: [PilgrimDashboardController],
   providers: [
     {
-      provide: 'IDashboardUseCase',
-      useClass: DashboardUseCase,
+      provide: 'IPilgrimDashboardRepository',
+      useClass: PilgrimDashboardRepository,
     },
     {
-      provide: 'IDashboardRepository',
-      useClass: DashboardRepository,
+      provide: 'IPilgrimDashboardUseCase',
+      useClass: PilgrimDashboardUseCase,
     },
   ],
-  exports: ['IDashboardUseCase'],
 })
 export class DashboardModule {}
