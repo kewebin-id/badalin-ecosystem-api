@@ -4,7 +4,7 @@ export enum EPrefix {
 
 export enum EActorPrefix {
   ADMIN = `${EPrefix.V1}/admin`,
-  PILGRIM = `${EPrefix.V1}`,
+  PILGRIM = `${EPrefix.V1}/visa`,
   PROVIDER = `${EPrefix.V1}/:slug`,
 }
 
@@ -16,15 +16,16 @@ export enum EVisaRoutes {
   // Provider Features
   PROVIDER_AUTH = `${EActorPrefix.PROVIDER}/auth`,
   PROVIDER_AGENCY = `${EActorPrefix.PROVIDER}/agency`,
-  PROVIDER_VERIFICATION = `${EActorPrefix.PROVIDER}/verification`,
-  PROVIDER_MANIFEST = `${EActorPrefix.PROVIDER}/manifest`,
+  PROVIDER_VERIFICATION = `${EActorPrefix.PROVIDER}/submissions`,
+  PROVIDER_MANIFEST = `${EActorPrefix.PROVIDER}/submissions`,
   
   // Pilgrim Features
   PILGRIM_AUTH = `${EActorPrefix.PILGRIM}/auth`,
-  PILGRIM_SUBMISSION = `${EActorPrefix.PILGRIM}/submission`,
+  PILGRIM_SUBMISSION = `${EActorPrefix.PILGRIM}`,
   PILGRIM_DASHBOARD = `${EActorPrefix.PILGRIM}/dashboard`,
   PILGRIM_DOCUMENT = `${EActorPrefix.PILGRIM}/document`,
   PILGRIM_PROFILE = `${EActorPrefix.PILGRIM}/profile`,
+  PILGRIM_MANAGEMENT = `${EActorPrefix.PILGRIM}/pilgrims`,
   UPLOAD = `${EPrefix.V1}/upload`,
 }
 
@@ -40,18 +41,19 @@ export enum EAuthRoutes {
 }
 
 export enum ESubmissionRoutes {
-  LIST = '/',
-  DETAIL = '/:id',
+  LIST = '/transactions',
+  DETAIL = '/transactions/:id',
   SUBMIT = '/submit',
-  PREVIEW = '/preview',
-  VERIFY_PAYMENT = '/:id/verify-payment',
-  REVIEW = '/:id/review',
+  PREVIEW = '/submissions/preview',
+  VERIFY_PAYMENT = '/transactions/:id/verify-payment',
+  UPLOAD_PROOF = '/transactions/:id/upload-proof',
+  REVIEW = '/transactions/:id/review',
 }
 
 export enum EManifestRoutes {
-  FLIGHT = '/:id/flight',
-  HOTEL = '/:id/hotel',
-  TRANSPORT = '/:id/transport',
+  FLIGHT = '/:id/manifest/flight',
+  HOTEL = '/:id/manifest/hotel',
+  TRANSPORT = '/:id/manifest/transport',
 }
 
 export enum EDocumentRoutes {

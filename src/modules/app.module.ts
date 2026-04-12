@@ -10,6 +10,7 @@ import {
   AuthModule,
   DashboardModule,
   DocumentModule,
+  PilgrimModule,
   SubmissionModule,
 } from './visa';
 
@@ -21,6 +22,7 @@ import {
     }),
     SubmissionModule,
     AuthModule,
+    PilgrimModule,
     DocumentModule,
     DashboardModule,
     AgencyModule,
