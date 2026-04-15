@@ -50,9 +50,12 @@ export class PilgrimManagementRepository implements IPilgrimManagementRepository
     createdBy: string,
   ): Promise<Pilgrim> => {
     const { ocrConfidence, ...rest } = dto;
+    const isComplete = this.calculateCompletion(rest);
+
     return this.db.pilgrim.create({
       data: {
         ...rest,
+        isComplete,
         leaderId,
         agencySlug,
         createdBy,
@@ -63,14 +66,46 @@ export class PilgrimManagementRepository implements IPilgrimManagementRepository
 
   update = async (id: string, dto: UpdatePilgrimDto, updatedBy: string): Promise<Pilgrim> => {
     const { ocrConfidence, ...rest } = dto;
+
+    // Fetch current state to recalculate completion
+    const existing = await this.db.pilgrim.findUnique({ where: { id } });
+    if (!existing) {
+      throw new Error('Pilgrim not found');
+    }
+
+    const mergedData = { ...existing, ...rest };
+    const isComplete = this.calculateCompletion(mergedData);
+
     return this.db.pilgrim.update({
       where: { id },
       data: {
         ...rest,
+        isComplete,
         updatedBy,
       },
     });
   };
+
+  private calculateCompletion(data: any): boolean {
+    const mandatoryFields = [
+      'fullName',
+      'passportNumber',
+      'passportExpiry',
+      'birthDate',
+      'gender',
+      'maritalStatus',
+      'nik',
+      'ktpUrl',
+      'passportUrl',
+    ];
+
+    return mandatoryFields.every((field) => {
+      const value = data[field];
+      if (value === undefined || value === null) return false;
+      if (typeof value === 'string' && value.trim() === '') return false;
+      return true;
+    });
+  }
 
   delete = async (id: string): Promise<void> => {
     await this.db.pilgrim.update({
