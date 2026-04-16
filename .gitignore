@@ -6,6 +6,7 @@ yarn.lock
 
 # Keep environment variables out of version control
 .env
+*key.json
 
 src/shared/database/prisma/generated/prisma
 generated/prisma
@@ -15,3 +16,6 @@ generated/prisma
 
 # seeder
 src/shared/database/seed*
+
+# ocr
+*traineddata*
