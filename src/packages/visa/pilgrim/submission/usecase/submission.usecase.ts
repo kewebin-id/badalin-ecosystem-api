@@ -3,8 +3,10 @@ import { IUserContext } from '@/shared/utils/rest-api/types';
 import { IVisaSubmissionRepository } from '../ports/submission.repository.port';
 import { VisaSubmissionEntity } from '../domain/submission.entity';
 
+import { IPilgrimSubmissionUseCase } from '../ports/submission.usecase.port';
+
 @Injectable()
-export class PilgrimSubmissionUseCase {
+export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
   constructor(
     @Inject('IVisaSubmissionRepository')
     private readonly repository: IVisaSubmissionRepository,

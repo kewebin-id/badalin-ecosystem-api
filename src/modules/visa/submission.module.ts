@@ -1,4 +1,4 @@
-import { PilgrimSubmissionUseCase, VisaSubmissionRepository, PaymentRepository, PaymentScheduler } from '@/packages/visa/pilgrim/submission';
+import { PilgrimSubmissionUseCase, VisaSubmissionRepository, PaymentRepository, PaymentScheduler, PilgrimSubmissionController } from '@/packages/visa/pilgrim/submission';
 import { VerificationController, VerificationUseCase } from '@/packages/visa/provider/verification';
 import { ManifestController, ManifestUseCase } from '@/packages/visa/provider/manifest';
 import { Module } from '@nestjs/common';
@@ -12,6 +12,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [
+    PilgrimSubmissionController,
     VerificationController,
     ManifestController,
   ],
