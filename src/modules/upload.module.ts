@@ -1,3 +1,4 @@
+import { OcrProviderService } from '@/shared/services/ocr-provider.service';
 import { OcrService } from '@/shared/services/ocr.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -20,6 +21,7 @@ import { UploadUseCase } from '../packages/upload/usecase/upload.usecase';
   controllers: [UploadController],
   providers: [
     OcrService,
+    OcrProviderService,
     {
       provide: 'IUploadRepository',
       useClass: PrismaUploadRepository,

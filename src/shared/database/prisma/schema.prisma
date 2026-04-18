@@ -243,3 +243,34 @@ model TransportationManifest {
 
   @@map("transportation_manifests")
 }
+
+model OcrProvider {
+  id          String     @id @default(uuid())
+  keyFilename String     @unique @map("key_filename")
+  projectId   String     @map("project_id")
+  sequence    Int        @default(1)
+  isActive    Boolean    @default(true) @map("is_active")
+  usages      OcrUsage[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  @@map("ocr_providers")
+}
+
+model OcrUsage {
+  id         String      @id @default(uuid())
+  providerId String      @map("provider_id")
+  month      Int
+  year       Int
+  count      Int         @default(0)
+  provider   OcrProvider @relation(fields: [providerId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([providerId, month, year])
+  @@map("ocr_usages")
+}
