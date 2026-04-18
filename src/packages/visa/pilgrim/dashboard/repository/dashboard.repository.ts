@@ -12,7 +12,7 @@ export class PilgrimDashboardRepository implements IPilgrimDashboardRepository {
   ): Promise<{ count: number; rows: SubmissionHistory[] }> => {
     const where = {
       leaderId,
-      agency_slug: agencySlug,
+      agencySlug: agencySlug,
     };
 
     const [count, rows] = await Promise.all([
