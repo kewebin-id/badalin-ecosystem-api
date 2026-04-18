@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
 import * as vision from '@google-cloud/vision';
+import { Injectable } from '@nestjs/common';
 import sharp from 'sharp';
 import { globalLogger as Logger } from '../utils/logger';
+import { OcrProviderService } from './ocr-provider.service';
 
 export type OcrType =
   | 'PASSPORT'
@@ -41,16 +42,29 @@ export interface OcrResult {
 
 @Injectable()
 export class OcrService {
-  private visionClient: vision.ImageAnnotatorClient;
+  private clientCache: Map<string, vision.ImageAnnotatorClient> = new Map();
 
-  constructor() {
-    const gcpKeyJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-    
-    this.visionClient = new vision.ImageAnnotatorClient({
-      ...(gcpKeyJson && { credentials: JSON.parse(gcpKeyJson) }),
+  constructor(private readonly providerService: OcrProviderService) {}
+
+  private async getVisionClient(): Promise<{ client: vision.ImageAnnotatorClient; providerId: string }> {
+    const provider = await this.providerService.getActiveProvider();
+
+    if (this.clientCache.has(provider.providerId)) {
+      return { client: this.clientCache.get(provider.providerId)!, providerId: provider.providerId };
+    }
+
+    const client = new vision.ImageAnnotatorClient({
+      keyFilename: provider.keyFilename,
+      projectId: provider.projectId,
     });
-    
-    Logger.debug('Google Cloud Vision Client initialized', 'OcrService');
+
+    this.clientCache.set(provider.providerId, client);
+    Logger.debug(
+      `Google Vision Client initialized for provider: ${provider.providerId} (${provider.keyFilename})`,
+      'OcrService',
+    );
+
+    return { client, providerId: provider.providerId };
   }
 
   async extractData(imageSource: string, type: OcrType = 'PASSPORT'): Promise<OcrResult> {
@@ -86,12 +100,16 @@ export class OcrService {
         }
       }
 
-      const [response] = await this.visionClient.documentTextDetection(imageBuffer);
+      const { client, providerId } = await this.getVisionClient();
+      const [response] = await client.documentTextDetection(imageBuffer);
       const fullTextAnnotation = response.fullTextAnnotation;
-      
+
       if (!fullTextAnnotation || !fullTextAnnotation.text) {
         throw new Error('No text found in document');
       }
+
+      // Increment usage count for the successful scan
+      await this.providerService.incrementUsage(providerId);
 
       const text = fullTextAnnotation.text;
       const confidence = (fullTextAnnotation.pages?.[0]?.confidence || 0) * 100;
@@ -134,16 +152,16 @@ export class OcrService {
       confidence,
     };
 
-    const lines = text.split('\n').map(l => l.replace(/ /g, '').toUpperCase());
-    
+    const lines = text.split('\n').map((l) => l.replace(/ /g, '').toUpperCase());
+
     let mrzString = '';
     for (let i = 0; i < lines.length; i++) {
-        const current = lines[i];
-        const next = lines[i+1];
-        if (current.startsWith('P<') && current.length >= 40 && next && next.length >= 40) {
-            mrzString = current.padEnd(44, '<').substring(0, 44) + next.padEnd(44, '<').substring(0, 44);
-            break;
-        }
+      const current = lines[i];
+      const next = lines[i + 1];
+      if (current.startsWith('P<') && current.length >= 40 && next && next.length >= 40) {
+        mrzString = current.padEnd(44, '<').substring(0, 44) + next.padEnd(44, '<').substring(0, 44);
+        break;
+      }
     }
 
     if (mrzString.length === 88) {
@@ -175,19 +193,19 @@ export class OcrService {
 
   private decodeMrz(line1: string, line2: string, baseConfidence: number, rawText: string): OcrResult {
     const namePart = line1.substring(5).replace(/</g, ' ').trim();
-    const nameSegments = namePart.split('  ').filter(s => s !== '');
+    const nameSegments = namePart.split('  ').filter((s) => s !== '');
     const fullName = nameSegments.reverse().join(' ').trim();
 
     const passportNumber = line2.substring(0, 9).replace(/</g, '').toUpperCase();
     const passportCheck = parseInt(line2.substring(9, 10), 10);
     const nationality = line2.substring(10, 13).replace(/</g, '');
-    
+
     const dobRaw = line2.substring(13, 19);
     const dobCheck = parseInt(line2.substring(19, 20), 10);
-    
+
     const genderRaw = line2.substring(20, 21);
     const gender = genderRaw === 'M' ? 'LAKI-LAKI' : genderRaw === 'F' ? 'PEREMPUAN' : 'OTHER';
-    
+
     const expiryRaw = line2.substring(21, 27);
     const expiryCheck = parseInt(line2.substring(27, 28), 10);
 
@@ -201,7 +219,7 @@ export class OcrService {
     if (!isPassportValid || !isDobValid) {
       status = 'FAILED_CHECKSUM';
       message = 'Data tidak valid (Checksum Error). Pastikan seluruh bagian bawah paspor terlihat jelas.';
-      confidence = Math.min(confidence, 40); 
+      confidence = Math.min(confidence, 40);
     }
 
     const result: OcrResult = {
@@ -225,7 +243,7 @@ export class OcrService {
 
   private calculateNusukCompatibility(confidence: number, isChecksumValid: boolean): OcrResult['nusuk_compatibility'] {
     let score = confidence;
-    
+
     // Checksum failure is a heavy penalty
     if (!isChecksumValid) {
       return {
@@ -263,7 +281,7 @@ export class OcrService {
   private calculateChecksum(str: string): number {
     const weights = [7, 3, 1];
     const normalized = this.normalizeMrzChars(str);
-    
+
     let sum = 0;
     for (let i = 0; i < normalized.length; i++) {
       const char = normalized[i].toUpperCase();
@@ -277,7 +295,8 @@ export class OcrService {
   }
 
   private normalizeMrzChars(str: string): string {
-    return str.toUpperCase()
+    return str
+      .toUpperCase()
       .replace(/O|D/g, '0')
       .replace(/I|L|\|/g, '1')
       .replace(/Z/g, '2')
@@ -295,8 +314,8 @@ export class OcrService {
       for (let i = 0; i < data.length; i++) {
         if (data[i] > threshold) whitePixels++;
       }
-      
-      if ((whitePixels / data.length) > 0.15) {
+
+      if (whitePixels / data.length > 0.15) {
         return { isValid: false, message: 'Foto terdeteksi silau/mantul, silakan foto ulang tanpa flash' };
       }
 
@@ -316,7 +335,7 @@ export class OcrService {
     const month = raw.substring(2, 4);
     const day = raw.substring(4, 6);
     const currentYear = new Date().getFullYear() % 100;
-    const yearPrefix = isDob ? (yearShort > currentYear ? '19' : '20') : (yearShort < 50 ? '20' : '19');
+    const yearPrefix = isDob ? (yearShort > currentYear ? '19' : '20') : yearShort < 50 ? '20' : '19';
     return `${yearPrefix}${yearShort}-${month}-${day}`;
   }
 
@@ -330,7 +349,8 @@ export class OcrService {
     const nikMatch = text.match(/([0-9]{16})/);
     if (nikMatch) result.nik = nikMatch[1];
 
-    if (text.toUpperCase().includes('LAKI-LAKI') || text.toUpperCase().includes('LAKILAKI')) result.gender = 'LAKI-LAKI';
+    if (text.toUpperCase().includes('LAKI-LAKI') || text.toUpperCase().includes('LAKILAKI'))
+      result.gender = 'LAKI-LAKI';
     else if (text.toUpperCase().includes('PEREMPUAN')) result.gender = 'PEREMPUAN';
 
     const lines = text.split('\n');
