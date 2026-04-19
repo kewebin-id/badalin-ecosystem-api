@@ -1,5 +1,6 @@
 import * as vision from '@google-cloud/vision';
 import { Injectable } from '@nestjs/common';
+import dayjs from 'dayjs';
 import sharp from 'sharp';
 import { globalLogger as Logger } from '../utils/logger';
 import { OcrProviderService } from './ocr-provider.service';
@@ -101,15 +102,18 @@ export class OcrService {
       }
 
       const { client, providerId } = await this.getVisionClient();
+
+      // Increment usage count immediately to consume quota regardless of scan result
+      this.providerService.incrementUsage(providerId).catch((e) => {
+        Logger.error('Failed to increment OCR usage', e instanceof Error ? e.stack : undefined, 'OcrService');
+      });
+
       const [response] = await client.documentTextDetection(imageBuffer);
       const fullTextAnnotation = response.fullTextAnnotation;
 
       if (!fullTextAnnotation || !fullTextAnnotation.text) {
         throw new Error('No text found in document');
       }
-
-      // Increment usage count for the successful scan
-      await this.providerService.incrementUsage(providerId);
 
       const text = fullTextAnnotation.text;
       const confidence = (fullTextAnnotation.pages?.[0]?.confidence || 0) * 100;
@@ -207,7 +211,6 @@ export class OcrService {
     const gender = genderRaw === 'M' ? 'LAKI-LAKI' : genderRaw === 'F' ? 'PEREMPUAN' : 'OTHER';
 
     const expiryRaw = line2.substring(21, 27);
-    const expiryCheck = parseInt(line2.substring(27, 28), 10);
 
     const isPassportValid = this.calculateChecksum(line2.substring(0, 9)) === passportCheck;
     const isDobValid = this.calculateChecksum(dobRaw) === dobCheck;
@@ -222,35 +225,52 @@ export class OcrService {
       confidence = Math.min(confidence, 40);
     }
 
+    const birthDate = this.formatMrzDate(dobRaw, true);
+    const passportExpiry = this.formatMrzDate(expiryRaw, false);
+
     const result: OcrResult = {
       fullName,
       passportNumber,
       nationality,
       gender,
-      birthDate: this.formatMrzDate(dobRaw, true),
-      passportExpiry: this.formatMrzDate(expiryRaw, false),
+      birthDate,
+      passportExpiry,
       confidence,
       status,
       message,
       rawText,
     };
 
-    // NUSUK COMPATIBILITY SCORING
-    result.nusuk_compatibility = this.calculateNusukCompatibility(confidence, isPassportValid && isDobValid);
+    // NUSUK COMPATIBILITY SCORING RULES
+    // 1. Name readable
+    const isNameReadable = fullName.length > 0;
+    // 2. Passport readable
+    const isPassportNumberReadable = passportNumber.length > 0;
+    // 3. MRZ fully parsed (line length 44)
+    const isMrzFullLength = line1.length === 44 && line2.length === 44;
+    // 4. Expiry Date >= today
+    const today = dayjs().startOf('day');
+    const expiry = dayjs(passportExpiry);
+    const isExpiryValid = expiry.isValid() && (expiry.isAfter(today) || expiry.isSame(today));
+
+    const isValidRequiredFields = isNameReadable && isPassportNumberReadable && isMrzFullLength && isExpiryValid;
+
+    // Calculate Nusuk score based on strict confidence and exact field requirements.
+    result.nusuk_compatibility = this.calculateNusukCompatibility(confidence, isPassportValid && isDobValid && isValidRequiredFields);
 
     return result;
   }
 
-  private calculateNusukCompatibility(confidence: number, isChecksumValid: boolean): OcrResult['nusuk_compatibility'] {
+  private calculateNusukCompatibility(confidence: number, isStrictValid: boolean): OcrResult['nusuk_compatibility'] {
     let score = confidence;
 
     // Checksum failure is a heavy penalty
-    if (!isChecksumValid) {
+    if (!isStrictValid) {
       return {
         score: Math.min(score, 75),
         status: 'REJECTED',
         glare_detected: true,
-        message: 'Data tidak valid (Checksum Gagal). Indikasi pantulan cahaya atau blur parah.',
+        message: 'Data tidak valid (Nama/No Paspor/Masa Berlaku bermasalah atau Checksum MRZ Gagal). Indikasi pantulan cahaya atau blur parah.',
       };
     }
 
