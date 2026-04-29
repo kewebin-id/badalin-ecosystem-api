@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ReservedWordGuard implements CanActivate {
@@ -12,6 +7,13 @@ export class ReservedWordGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const slug = request.params.slug;
+    const path = request.route.path;
+
+    const isInitialSetupFlow = slug?.toLowerCase() === 'p' && path.includes('/auth/');
+
+    if (isInitialSetupFlow) {
+      return true;
+    }
 
     if (slug && this.reservedWords.includes(slug.toLowerCase())) {
       throw new ForbiddenException(
