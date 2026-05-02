@@ -9,7 +9,23 @@ import {
 
 export interface IProviderAuthUseCase {
   register: (dto: ProviderRegisterDto) => Promise<IUsecaseResponse<User>>;
-  login: (dto: ProviderLoginDto, isProviderAuth?: boolean) => Promise<IUsecaseResponse<any>>;
+  login: (dto: ProviderLoginDto, isProviderAuth?: boolean) => Promise<IUsecaseResponse<{
+    user: {
+      id: string;
+      email: string;
+      phoneNumber: string;
+      fullName: string | null;
+      role: string;
+      photoUrl: string | null;
+      agency: {
+        name: string;
+        slug: string;
+        isActive: boolean;
+        isSlugSetup: boolean;
+      } | null;
+    };
+    token: string;
+  }>>;
   verifyInvitationToken: (token: string) => Promise<IUsecaseResponse<{ email: string }>>;
   forgotPassword: (dto: ProviderForgotPasswordDto) => Promise<IUsecaseResponse<boolean>>;
   resetPassword: (dto: ProviderResetPasswordDto) => Promise<IUsecaseResponse<boolean>>;
