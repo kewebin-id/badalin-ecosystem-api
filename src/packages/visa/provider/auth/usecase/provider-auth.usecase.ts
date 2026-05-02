@@ -94,6 +94,7 @@ export class ProviderAuthUseCase implements IProviderAuthUseCase {
           name: string;
           slug: string;
           isActive: boolean;
+          isSlugSetup: boolean;
         } | null;
       };
       token: string;
