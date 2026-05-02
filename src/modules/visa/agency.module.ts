@@ -25,5 +25,6 @@ import { ProviderAuthRepository } from '@/packages/visa/provider/auth';
       useClass: ProviderAuthRepository,
     },
   ],
+  exports: ['IAgencySettingsRepository'],
 })
 export class AgencyModule {}

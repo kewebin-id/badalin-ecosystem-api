@@ -34,7 +34,7 @@ export class PilgrimSubmissionController {
     }
   }
 
-  @Post('submit')
+  @Post('submissions')
   async submit(@UserContext() ctx: IUserContext, @Body() data: any) {
     try {
       const result = await this.usecase.submit(data, ctx);
@@ -45,7 +45,23 @@ export class PilgrimSubmissionController {
     } catch (error) {
       throw new HttpException(
         error instanceof Error ? error.message : 'Internal server error',
-        500,
+        error instanceof HttpException ? error.getStatus() : 500,
+      );
+    }
+  }
+  
+  @Post('submissions/preview')
+  async preview(@UserContext() ctx: IUserContext, @Body() data: any) {
+    try {
+      const result = await this.usecase.preview(data, ctx);
+      return {
+        message: 'Success preview submission',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Internal server error',
+        error instanceof HttpException ? error.getStatus() : 500,
       );
     }
   }
