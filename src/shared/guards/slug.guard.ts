@@ -54,6 +54,20 @@ export class SlugGuard implements CanActivate {
       throw new ForbiddenException(`Access denied: You do not have permission to access agency "${slug}"`);
     }
 
+    // 4. If slug is temporary (not setup), restrict access
+    if (slug.startsWith('temp-')) {
+      const path = request.route.path;
+      const method = request.method;
+
+      const isAuthRoute = path.includes('/auth/');
+      const isAgencySetup = path.includes('/agency') && method === 'PATCH';
+      const isAgencyCheck = path.includes('/agency/check-slug');
+
+      if (!isAuthRoute && !isAgencySetup && !isAgencyCheck) {
+        throw new ForbiddenException('Agency slug setup required. Please complete your profile first.');
+      }
+    }
+
     return true;
   }
 }

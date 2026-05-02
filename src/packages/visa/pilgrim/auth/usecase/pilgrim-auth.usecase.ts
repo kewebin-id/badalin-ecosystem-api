@@ -89,6 +89,7 @@ export class PilgrimAuthUseCase implements IPilgrimAuthUseCase {
           name: string;
           slug: string;
           isActive: boolean;
+          isSlugSetup: boolean;
         } | null;
       };
       token: string;
@@ -126,6 +127,7 @@ export class PilgrimAuthUseCase implements IPilgrimAuthUseCase {
                   name: user.agency.name,
                   slug: user.agency.slug,
                   isActive: user.agency.isActive,
+                  isSlugSetup: !user.agency.slug.startsWith('temp-'),
                 }
               : null,
           },

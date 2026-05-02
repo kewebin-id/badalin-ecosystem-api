@@ -27,6 +27,13 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
       throw new HttpException('Agency not found', HttpStatus.NOT_FOUND);
     }
 
+    if (agency.slug.startsWith('temp-')) {
+      throw new HttpException(
+        'This agency is not yet active (slug setup required)',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const pilgrimIds = data.pilgrimIds || [];
     const totalAmount = pilgrimIds.length * Number(agency.visaPrice);
 
@@ -58,6 +65,21 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
         totalAmount: 0,
         breakdown: '',
         errors: [{ path: 'agency', message: 'Agency not found' }],
+        warnings: [],
+      };
+    }
+
+    if (agency.slug.startsWith('temp-')) {
+      return {
+        isValid: false,
+        totalAmount: 0,
+        breakdown: '',
+        errors: [
+          {
+            path: 'agency',
+            message: 'This agency is not yet active (slug setup required)',
+          },
+        ],
         warnings: [],
       };
     }

@@ -30,7 +30,12 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
         throw new HttpException('Agency data not found', HttpStatus.NOT_FOUND);
       }
 
-      return { data: agency };
+      return {
+        data: {
+          ...agency,
+          isSlugSetup: !agency.slug.startsWith('temp-'),
+        } as any,
+      };
     } catch (error) {
       return {
         error: {
