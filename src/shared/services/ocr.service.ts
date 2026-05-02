@@ -104,9 +104,11 @@ export class OcrService {
       const { client, providerId } = await this.getVisionClient();
 
       // Increment usage count immediately to consume quota regardless of scan result
-      this.providerService.incrementUsage(providerId).catch((e) => {
+      try {
+        await this.providerService.incrementUsage(providerId);
+      } catch (e) {
         Logger.error('Failed to increment OCR usage', e instanceof Error ? e.stack : undefined, 'OcrService');
-      });
+      }
 
       const [response] = await client.documentTextDetection(imageBuffer);
       const fullTextAnnotation = response.fullTextAnnotation;
