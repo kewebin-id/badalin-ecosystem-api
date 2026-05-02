@@ -1,6 +1,7 @@
 import { PilgrimSubmissionUseCase, VisaSubmissionRepository, PaymentRepository, PaymentScheduler, PilgrimSubmissionController } from '@/packages/visa/pilgrim/submission';
 import { VerificationController, VerificationUseCase } from '@/packages/visa/provider/verification';
 import { ManifestController, ManifestUseCase } from '@/packages/visa/provider/manifest';
+import { AgencyModule } from './agency.module';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -10,6 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
       secret: process.env.JWT_SECRET || 'secret',
       signOptions: { expiresIn: '1d' },
     }),
+    AgencyModule,
   ],
   controllers: [
     PilgrimSubmissionController,

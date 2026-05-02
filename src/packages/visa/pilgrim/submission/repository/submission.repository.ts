@@ -62,7 +62,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
   }
 
   async create(data: any, ctx: IUserContext): Promise<VisaSubmissionEntity> {
-    const { agencySlug, pilgrimIds, ...submissionData } = data;
+    const { agencySlug, pilgrimIds, flights, hotels, transportations, ...submissionData } = data;
 
     return this.db.$transaction(async (tx) => {
       const submission = await tx.visaSubmission.create({
@@ -71,9 +71,38 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
           agency: { connect: { slug: agencySlug } },
           leader: { connect: { id: ctx.id } },
           members: { connect: pilgrimIds.map((id: string) => ({ id })) },
+          flights: flights
+            ? {
+                create: flights.map((f: any) => ({
+                  ...f,
+                  createdBy: ctx.id,
+                })),
+              }
+            : undefined,
+          hotels: hotels
+            ? {
+                create: hotels.map((h: any) => ({
+                  ...h,
+                  createdBy: ctx.id,
+                })),
+              }
+            : undefined,
+          transportations: transportations
+            ? {
+                create: transportations.map((t: any) => ({
+                  ...t,
+                  createdBy: ctx.id,
+                })),
+              }
+            : undefined,
           createdBy: ctx.id,
         },
-        include: { members: true },
+        include: {
+          members: true,
+          flights: true,
+          hotels: true,
+          transportations: true,
+        },
       });
 
       return submission as any;
