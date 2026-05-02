@@ -19,6 +19,13 @@ export interface IPilgrimAuthUseCase {
       phoneNumber: string;
       fullName: string | null;
       role: string;
+      photoUrl: string | null;
+      agency: {
+        name: string;
+        slug: string;
+        isActive: boolean;
+        isSlugSetup: boolean;
+      } | null;
     };
     token: string;
   }>>;

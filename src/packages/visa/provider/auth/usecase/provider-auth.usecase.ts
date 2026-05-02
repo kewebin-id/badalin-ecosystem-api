@@ -135,6 +135,7 @@ export class ProviderAuthUseCase implements IProviderAuthUseCase {
                   name: user.agency.name,
                   slug: user.agency.slug,
                   isActive: user.agency.isActive,
+                  isSlugSetup: !user.agency.slug.startsWith('temp-'),
                 }
               : null,
           },
