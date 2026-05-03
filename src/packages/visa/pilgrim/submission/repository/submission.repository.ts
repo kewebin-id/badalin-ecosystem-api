@@ -1,9 +1,18 @@
 import { clientDb } from '@/shared/utils/db';
-import { Injectable, Logger } from '@nestjs/common';
-import { PaymentStatus, VerifyStatus } from '@prisma/client';
 import { IUserContext } from '@/shared/utils/rest-api/types';
-import { IVisaSubmissionRepository } from '../ports/submission.repository.port';
-import { VisaSubmissionEntity } from '../domain/submission.entity';
+import { Injectable } from '@nestjs/common';
+import { VerifyStatus } from '@prisma/client';
+import {
+  FlightManifestEntity,
+  HotelManifestEntity,
+  TransportationManifestEntity,
+  VisaSubmissionEntity,
+} from '../domain/submission.entity';
+import {
+  IManifestsInput,
+  IVisaSubmissionCreateInput,
+  IVisaSubmissionRepository,
+} from '../ports/submission.repository.port';
 
 @Injectable()
 export class VisaSubmissionRepository implements IVisaSubmissionRepository {
@@ -22,7 +31,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       },
     });
 
-    return submission as any;
+    return submission as unknown as VisaSubmissionEntity;
   }
 
   async findAll(
@@ -58,10 +67,10 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       this.db.visaSubmission.count({ where }),
     ]);
 
-    return { data: data as any, total };
+    return { data: data as unknown as VisaSubmissionEntity[], total };
   }
 
-  async create(data: any, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+  async create(data: IVisaSubmissionCreateInput, ctx: IUserContext): Promise<VisaSubmissionEntity> {
     const { agencySlug, pilgrimIds, flights, hotels, transportations, ...submissionData } = data;
 
     return this.db.$transaction(async (tx) => {
@@ -73,24 +82,30 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
           members: { connect: pilgrimIds.map((id: string) => ({ id })) },
           flights: flights
             ? {
-                create: flights.map((f: any) => ({
+                create: flights.map(({ id, ...f }: FlightManifestEntity) => ({
                   ...f,
+                  flightDate: new Date(f.flightDate),
+                  eta: new Date(f.eta),
+                  etd: new Date(f.etd),
                   createdBy: ctx.id,
                 })),
               }
             : undefined,
           hotels: hotels
             ? {
-                create: hotels.map((h: any) => ({
+                create: hotels.map(({ id, ...h }: HotelManifestEntity) => ({
                   ...h,
+                  checkIn: new Date(h.checkIn),
+                  checkOut: new Date(h.checkOut),
                   createdBy: ctx.id,
                 })),
               }
             : undefined,
           transportations: transportations
             ? {
-                create: transportations.map((t: any) => ({
+                create: transportations.map(({ id, ...t }: TransportationManifestEntity) => ({
                   ...t,
+                  date: new Date(t.date),
                   createdBy: ctx.id,
                 })),
               }
@@ -105,7 +120,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
         },
       });
 
-      return submission as any;
+      return submission as unknown as VisaSubmissionEntity;
     });
   }
 
@@ -118,43 +133,73 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     return this.db.$transaction(async (tx) => {
       const updateData: any = { ...data };
       if (pilgrimIds && pilgrimIds.length > 0) {
-        updateData.members = { set: pilgrimIds.map((pid) => ({ id: pid })) };
+        updateData.members = { set: pilgrimIds.map((pid: string) => ({ id: pid })) };
       }
 
-      return tx.visaSubmission.update({
+      const submission = await tx.visaSubmission.update({
         where: { id },
         data: updateData,
         include: { members: true },
-      }) as any;
+      });
+
+      return submission as unknown as VisaSubmissionEntity;
     });
   }
 
-  async createManifests(id: string, manifests: any, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+  async createManifests(
+    id: string,
+    manifests: IManifestsInput,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
     const { flights, hotels, transportations } = manifests;
 
     return this.db.$transaction(async (tx) => {
       if (flights && flights.length > 0) {
         await tx.flightManifest.createMany({
-          data: flights.map((f: any) => ({ ...f, submissionId: id, createdBy: ctx.id })),
+          data: flights.map(({ id, ...f }: FlightManifestEntity) => ({
+            ...f,
+            flightDate: new Date(f.flightDate),
+            eta: new Date(f.eta),
+            etd: new Date(f.etd),
+            submissionId: id,
+            createdBy: ctx.id,
+          })),
         });
       }
       if (hotels && hotels.length > 0) {
         await tx.hotelManifest.createMany({
-          data: hotels.map((h: any) => ({ ...h, submissionId: id, createdBy: ctx.id })),
+          data: hotels.map(({ id, ...h }: HotelManifestEntity) => ({
+            ...h,
+            checkIn: new Date(h.checkIn),
+            checkOut: new Date(h.checkOut),
+            submissionId: id,
+            createdBy: ctx.id,
+          })),
         });
       }
       if (transportations && transportations.length > 0) {
         await tx.transportationManifest.createMany({
-          data: transportations.map((t: any) => ({ ...t, submissionId: id, createdBy: ctx.id })),
+          data: transportations.map(({ id, ...t }: TransportationManifestEntity) => ({
+            ...t,
+            date: new Date(t.date),
+            submissionId: id,
+            createdBy: ctx.id,
+          })),
         });
       }
 
-      return this.findById(id, ctx) as any;
+      const submission = await this.findById(id, ctx);
+      return submission as VisaSubmissionEntity;
     });
   }
 
-  async review(id: string, status: VerifyStatus, reason: string | null, ctx: IUserContext): Promise<VisaSubmissionEntity> {
-    return this.db.visaSubmission.update({
+  async review(
+    id: string,
+    status: VerifyStatus,
+    reason: string | null,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
+    const submission = await this.db.visaSubmission.update({
       where: { id },
       data: {
         verifyStatus: status,
@@ -165,6 +210,8 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
         updatedBy: ctx.id,
       },
       include: { members: true },
-    }) as any;
+    });
+
+    return submission as unknown as VisaSubmissionEntity;
   }
 }
