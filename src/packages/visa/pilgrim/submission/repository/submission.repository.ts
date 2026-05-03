@@ -1,7 +1,7 @@
 import { clientDb } from '@/shared/utils/db';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { Injectable } from '@nestjs/common';
-import { VerifyStatus } from '@prisma/client';
+import { FlightType, HotelCity, RoomType, TransportType, VerifyStatus } from '@prisma/client';
 import {
   FlightManifestEntity,
   HotelManifestEntity,
@@ -82,8 +82,9 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
           members: { connect: pilgrimIds.map((id: string) => ({ id })) },
           flights: flights
             ? {
-                create: flights.map(({ id, ...f }: FlightManifestEntity) => ({
+                create: flights.map((f) => ({
                   ...f,
+                  type: f.type as FlightType,
                   flightDate: new Date(f.flightDate),
                   eta: new Date(f.eta),
                   etd: new Date(f.etd),
@@ -93,8 +94,10 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
             : undefined,
           hotels: hotels
             ? {
-                create: hotels.map(({ id, ...h }: HotelManifestEntity) => ({
+                create: hotels.map((h) => ({
                   ...h,
+                  city: h.city as HotelCity,
+                  roomType: h.roomType as RoomType,
                   checkIn: new Date(h.checkIn),
                   checkOut: new Date(h.checkOut),
                   createdBy: ctx.id,
@@ -103,8 +106,9 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
             : undefined,
           transportations: transportations
             ? {
-                create: transportations.map(({ id, ...t }: TransportationManifestEntity) => ({
+                create: transportations.map((t) => ({
                   ...t,
+                  type: t.type as TransportType,
                   date: new Date(t.date),
                   createdBy: ctx.id,
                 })),
@@ -156,8 +160,9 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     return this.db.$transaction(async (tx) => {
       if (flights && flights.length > 0) {
         await tx.flightManifest.createMany({
-          data: flights.map(({ id, ...f }: FlightManifestEntity) => ({
+          data: flights.map((f) => ({
             ...f,
+            type: f.type as FlightType,
             flightDate: new Date(f.flightDate),
             eta: new Date(f.eta),
             etd: new Date(f.etd),
@@ -168,8 +173,10 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       }
       if (hotels && hotels.length > 0) {
         await tx.hotelManifest.createMany({
-          data: hotels.map(({ id, ...h }: HotelManifestEntity) => ({
+          data: hotels.map((h) => ({
             ...h,
+            city: h.city as HotelCity,
+            roomType: h.roomType as RoomType,
             checkIn: new Date(h.checkIn),
             checkOut: new Date(h.checkOut),
             submissionId: id,
@@ -179,8 +186,9 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       }
       if (transportations && transportations.length > 0) {
         await tx.transportationManifest.createMany({
-          data: transportations.map(({ id, ...t }: TransportationManifestEntity) => ({
+          data: transportations.map((t) => ({
             ...t,
+            type: t.type as TransportType,
             date: new Date(t.date),
             submissionId: id,
             createdBy: ctx.id,
