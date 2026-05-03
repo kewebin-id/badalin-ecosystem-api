@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpException, Inject, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { EVisaRoutes } from '@/shared/constants';
 import { Roles } from '@/shared/decorators/roles.decorator';
@@ -6,7 +17,7 @@ import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { RolesGuard } from '@/shared/guards/roles.guard';
 import { IUserContext } from '@/shared/utils/rest-api/types';
-import { IPilgrimSubmissionUseCase } from '../ports/submission.usecase.port';
+import { IPilgrimSubmissionUseCase, ISubmissionRequest } from '../ports/submission.usecase.port';
 
 @Controller(EVisaRoutes.PILGRIM_SUBMISSION)
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,23 +33,23 @@ export class PilgrimSubmissionController {
     try {
       const result = await this.usecase.getMySubmissions(ctx);
       return {
+        code: HttpStatus.OK,
         message: 'Success fetch submissions',
         data: result.data,
         total: result.total,
       };
     } catch (error) {
-      throw new HttpException(
-        error instanceof Error ? error.message : 'Internal server error',
-        500,
-      );
+      throw new HttpException(error instanceof Error ? error.message : 'Internal server error', 500);
     }
   }
 
   @Post('submissions')
-  async submit(@UserContext() ctx: IUserContext, @Body() data: any) {
+  @HttpCode(HttpStatus.CREATED)
+  async submit(@UserContext() ctx: IUserContext, @Body() data: ISubmissionRequest) {
     try {
       const result = await this.usecase.submit(data, ctx);
       return {
+        code: HttpStatus.CREATED,
         message: 'Submission created successfully',
         data: result,
       };
@@ -49,12 +60,13 @@ export class PilgrimSubmissionController {
       );
     }
   }
-  
+
   @Post('submissions/preview')
-  async preview(@UserContext() ctx: IUserContext, @Body() data: any) {
+  async preview(@UserContext() ctx: IUserContext, @Body() data: ISubmissionRequest) {
     try {
       const result = await this.usecase.preview(data, ctx);
       return {
+        code: HttpStatus.OK,
         message: 'Success preview submission',
         data: result,
       };
@@ -71,6 +83,7 @@ export class PilgrimSubmissionController {
     try {
       const result = await this.usecase.getDetail(id, ctx);
       return {
+        code: HttpStatus.OK,
         message: 'Success fetch submission detail',
         data: result,
       };
