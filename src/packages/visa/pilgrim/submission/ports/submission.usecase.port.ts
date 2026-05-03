@@ -1,9 +1,49 @@
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { VisaSubmissionEntity } from '../domain/submission.entity';
 
+export interface ISubmissionError {
+  path: string;
+  message: string;
+}
+
+export interface IPreviewResponse {
+  isValid: boolean;
+  totalAmount: number;
+  breakdown: string;
+  errors: ISubmissionError[];
+  warnings: string[];
+}
+
+export interface ISubmissionRequest {
+  agencySlug?: string;
+  pilgrimIds: string[];
+  rawdahMenTime?: string;
+  rawdahWomenTime?: string;
+  notes?: string;
+  flights: {
+    type: 'DEPARTURE' | 'RETURN';
+    flightNo: string;
+    carrier: string;
+    flightDate: string;
+    eta: string;
+    etd: string;
+    imageUrls: string[];
+  }[];
+  hotels: {
+    name: string;
+    resvNo: string;
+    checkIn: string;
+    checkOut: string;
+    city: 'MAKKAH' | 'MADINAH';
+    roomType: string;
+    imageUrls: string[];
+  }[];
+  transportations: any[];
+}
+
 export interface IPilgrimSubmissionUseCase {
-  submit(data: any, ctx: IUserContext): Promise<VisaSubmissionEntity>;
-  preview(data: any, ctx: IUserContext): Promise<any>;
+  submit(data: ISubmissionRequest, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  preview(data: ISubmissionRequest, ctx: IUserContext): Promise<IPreviewResponse>;
   getMySubmissions(ctx: IUserContext): Promise<{ data: VisaSubmissionEntity[]; total: number }>;
   getDetail(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }
