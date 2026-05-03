@@ -42,7 +42,7 @@ export interface ISubmissionRequest {
 }
 
 export interface IPilgrimSubmissionUseCase {
-  submit(data: ISubmissionRequest, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  submit(data: ISubmissionRequest, ctx: IUserContext): Promise<{ id: string }>;
   preview(data: ISubmissionRequest, ctx: IUserContext): Promise<IPreviewResponse>;
   getMySubmissions(ctx: IUserContext): Promise<{ data: VisaSubmissionEntity[]; total: number }>;
   getDetail(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;

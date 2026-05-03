@@ -20,7 +20,7 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
     private readonly agencyRepository: IAgencySettingsRepository,
   ) {}
 
-  async submit(data: ISubmissionRequest, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+  async submit(data: ISubmissionRequest, ctx: IUserContext): Promise<{ id: string }> {
     const agencySlug = ctx.agencySlug || data.agencySlug;
     if (!agencySlug) {
       throw new HttpException('Agency slug is required', HttpStatus.BAD_REQUEST);
@@ -44,7 +44,8 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
       totalAmount,
     };
 
-    return this.repository.create(submissionData, ctx);
+    const submission = await this.repository.create(submissionData, ctx);
+    return { id: submission.id };
   }
 
   async preview(data: ISubmissionRequest, ctx: IUserContext): Promise<IPreviewResponse> {
