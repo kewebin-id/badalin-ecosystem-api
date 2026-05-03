@@ -1,11 +1,11 @@
 import { IUserContext } from '@/shared/utils/rest-api/types';
-import { VerifyStatus } from '@prisma/client';
 import {
   FlightManifestEntity,
   HotelManifestEntity,
   TransportationManifestEntity,
   VisaSubmissionEntity,
 } from '../domain/submission.entity';
+import { FlightType, HotelCity, RoomType, TransportType, VerifyStatus } from '@prisma/client';
 
 export interface IVisaSubmissionCreateInput {
   agencySlug: string;
@@ -14,15 +14,41 @@ export interface IVisaSubmissionCreateInput {
   rawdahWomenTime?: string;
   notes?: string;
   totalAmount: number;
-  flights?: FlightManifestEntity[];
-  hotels?: HotelManifestEntity[];
-  transportations?: TransportationManifestEntity[];
+  flights?: (Omit<FlightManifestEntity, 'id' | 'flightDate' | 'eta' | 'etd' | 'type'> & {
+    flightDate: Date | string;
+    eta: Date | string;
+    etd: Date | string;
+    type: FlightType | string;
+  })[];
+  hotels?: (Omit<HotelManifestEntity, 'id' | 'checkIn' | 'checkOut' | 'city' | 'roomType'> & {
+    checkIn: Date | string;
+    checkOut: Date | string;
+    city: HotelCity | string;
+    roomType: RoomType | string;
+  })[];
+  transportations?: (Omit<TransportationManifestEntity, 'id' | 'date' | 'type'> & {
+    date: Date | string;
+    type: TransportType | string;
+  })[];
 }
 
 export interface IManifestsInput {
-  flights?: FlightManifestEntity[];
-  hotels?: HotelManifestEntity[];
-  transportations?: TransportationManifestEntity[];
+  flights?: (Omit<FlightManifestEntity, 'id' | 'flightDate' | 'eta' | 'etd' | 'type'> & {
+    flightDate: Date | string;
+    eta: Date | string;
+    etd: Date | string;
+    type: FlightType | string;
+  })[];
+  hotels?: (Omit<HotelManifestEntity, 'id' | 'checkIn' | 'checkOut' | 'city' | 'roomType'> & {
+    checkIn: Date | string;
+    checkOut: Date | string;
+    city: HotelCity | string;
+    roomType: RoomType | string;
+  })[];
+  transportations?: (Omit<TransportationManifestEntity, 'id' | 'date' | 'type'> & {
+    date: Date | string;
+    type: TransportType | string;
+  })[];
 }
 
 export interface IVisaSubmissionRepository {
