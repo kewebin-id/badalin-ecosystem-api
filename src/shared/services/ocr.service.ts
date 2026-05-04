@@ -266,7 +266,10 @@ export class OcrService {
     const isValidRequiredFields = isNameReadable && isPassportNumberReadable && isMrzFullLength && isExpiryValid;
 
     // Calculate Nusuk score based on strict confidence and exact field requirements.
-    result.nusuk_compatibility = this.calculateNusukCompatibility(confidence, isPassportValid && isDobValid && isValidRequiredFields);
+    result.nusuk_compatibility = this.calculateNusukCompatibility(
+      confidence,
+      isPassportValid && isDobValid && isValidRequiredFields,
+    );
 
     return result;
   }
@@ -280,7 +283,8 @@ export class OcrService {
         score: Math.min(score, 75),
         status: 'REJECTED',
         glare_detected: true,
-        message: 'Data tidak valid (Nama/No Paspor/Masa Berlaku bermasalah atau Checksum MRZ Gagal). Indikasi pantulan cahaya atau blur parah.',
+        message:
+          'Data tidak valid (Nama/No Paspor/Masa Berlaku bermasalah atau Checksum MRZ Gagal). Indikasi pantulan cahaya atau blur parah.',
       };
     }
 
@@ -453,9 +457,10 @@ export class OcrService {
 
     // 1. Extract Amount
     // Matches: Rp 1.000.000, IDR 500,000, Total: 200000, etc.
-    const amountMatch = cleanText.replace(/[.,]/g, '').match(/(?:RP|TOTAL|IDR|JUMLAH|NOMINAL)\s*(\d+)/i) || 
-                       text.match(/(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?)/);
-    
+    const amountMatch =
+      cleanText.replace(/[.,]/g, '').match(/(?:RP|TOTAL|IDR|JUMLAH|NOMINAL)\s*(\d+)/i) ||
+      text.match(/(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?)/);
+
     if (amountMatch) {
       const amountStr = amountMatch[1].replace(/[.,]/g, '');
       result.amount = parseInt(amountStr, 10);
@@ -472,8 +477,8 @@ export class OcrService {
         const namePart = line.replace(/DARI|FROM|PENGIRIM|[:;]/gi, '').trim();
         if (namePart.length > 3) {
           result.fullName = namePart;
-        } else if (lines[i+1]) {
-          result.fullName = lines[i+1].trim();
+        } else if (lines[i + 1]) {
+          result.fullName = lines[i + 1].trim();
         }
         break;
       }
@@ -482,16 +487,22 @@ export class OcrService {
     // 4. Extract Recipient Name & Account (To / Ke / Penerima)
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].toUpperCase();
-      if (line.includes(' KE ') || line.includes('PENERIMA') || line.includes('TUJUAN') || line.startsWith('KE ') || line.startsWith('TO ')) {
+      if (
+        line.includes(' KE ') ||
+        line.includes('PENERIMA') ||
+        line.includes('TUJUAN') ||
+        line.startsWith('KE ') ||
+        line.startsWith('TO ')
+      ) {
         const namePart = line.replace(/KE|PENERIMA|TUJUAN|TO|[:;]/gi, '').trim();
         if (namePart.length > 3) {
           result.recipientName = namePart;
-        } else if (lines[i+1]) {
-          result.recipientName = lines[i+1].trim();
+        } else if (lines[i + 1]) {
+          result.recipientName = lines[i + 1].trim();
         }
-        
+
         // Try to find account number in the same line or nearby
-        const accMatch = line.match(/\d{8,20}/) || (lines[i+1] ? lines[i+1].match(/\d{8,20}/) : null);
+        const accMatch = line.match(/\d{8,20}/) || (lines[i + 1] ? lines[i + 1].match(/\d{8,20}/) : null);
         if (accMatch) result.recipientAccount = accMatch[0];
         break;
       }
@@ -507,14 +518,24 @@ export class OcrService {
     }
 
     // 6. Extract Status
-    if (cleanText.includes('BERHASIL') || cleanText.includes('SUCCESS') || cleanText.includes('DITERIMA') || cleanText.includes('COMPLETED')) {
+    if (
+      cleanText.includes('BERHASIL') ||
+      cleanText.includes('SUCCESS') ||
+      cleanText.includes('DITERIMA') ||
+      cleanText.includes('COMPLETED')
+    ) {
       result.transferStatus = 'BERHASIL';
     }
 
     // 7. Extract Notes / Remark
     for (const line of lines) {
       const uLine = line.toUpperCase();
-      if (uLine.includes('BERITA') || uLine.includes('CATATAN') || uLine.includes('NOTES') || uLine.includes('REMARK')) {
+      if (
+        uLine.includes('BERITA') ||
+        uLine.includes('CATATAN') ||
+        uLine.includes('NOTES') ||
+        uLine.includes('REMARK')
+      ) {
         result.notes = line.replace(/BERITA|CATATAN|NOTES|REMARK|[:;]/gi, '').trim();
         break;
       }
