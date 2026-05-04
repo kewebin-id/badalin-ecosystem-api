@@ -256,4 +256,18 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
 
     return submission as unknown as VisaSubmissionEntity;
   }
+
+  async uploadProof(id: string, proofUrl: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+    const submission = await this.db.visaSubmission.update({
+      where: { id },
+      data: {
+        proofOfPayment: proofUrl,
+        paymentStatus: 'CHECKING',
+        updatedBy: ctx.id,
+      },
+      include: { members: true },
+    });
+
+    return submission as unknown as VisaSubmissionEntity;
+  }
 }

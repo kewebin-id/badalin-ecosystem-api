@@ -46,4 +46,5 @@ export interface IPilgrimSubmissionUseCase {
   preview(data: ISubmissionRequest, ctx: IUserContext): Promise<IPreviewResponse>;
   getMySubmissions(ctx: IUserContext): Promise<{ data: VisaSubmissionEntity[]; total: number }>;
   getDetail(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  uploadProof(id: string, file: any, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }
