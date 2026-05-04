@@ -9,7 +9,8 @@ export class ReservedWordGuard implements CanActivate {
     const slug = request.params.slug;
     const path = request.route.path;
 
-    const isInitialSetupFlow = slug?.toLowerCase() === 'p' && path.includes('/auth/');
+    const isInitialSetupFlow =
+      slug?.toLowerCase() === 'p' && (path.includes('/auth/') || path.includes('/agency'));
 
     if (isInitialSetupFlow) {
       return true;
