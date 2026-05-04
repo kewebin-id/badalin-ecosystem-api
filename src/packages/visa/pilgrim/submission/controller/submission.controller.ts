@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
-import { EVisaRoutes } from '@/shared/constants';
+import { EVisaRoutes, ESubmissionRoutes } from '@/shared/constants';
 import { Roles } from '@/shared/decorators/roles.decorator';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
@@ -85,6 +85,23 @@ export class PilgrimSubmissionController {
       return {
         code: HttpStatus.OK,
         message: 'Success fetch submission detail',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Internal server error',
+        error instanceof HttpException ? error.getStatus() : 500,
+      );
+    }
+  }
+
+  @Post(ESubmissionRoutes.UPLOAD_PROOF)
+  async uploadProof(@UserContext() ctx: IUserContext, @Param('id') id: string, @Body('file') file: string) {
+    try {
+      const result = await this.usecase.uploadProof(id, file, ctx);
+      return {
+        code: HttpStatus.OK,
+        message: 'Payment proof uploaded successfully',
         data: result,
       };
     } catch (error) {

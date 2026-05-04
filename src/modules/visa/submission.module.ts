@@ -4,6 +4,7 @@ import { ManifestController, ManifestUseCase } from '@/packages/visa/provider/ma
 import { AgencyModule } from './agency.module';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { UploadModule } from '../upload.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
       signOptions: { expiresIn: '1d' },
     }),
     AgencyModule,
+    UploadModule,
   ],
   controllers: [
     PilgrimSubmissionController,

@@ -11,6 +11,8 @@ import {
   ISubmissionRequest,
 } from '../ports/submission.usecase.port';
 
+import { IUploadUseCase } from '@/packages/upload/ports/i.usecase';
+
 @Injectable()
 export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
   constructor(
@@ -18,6 +20,8 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
     private readonly repository: IVisaSubmissionRepository,
     @Inject('IAgencySettingsRepository')
     private readonly agencyRepository: IAgencySettingsRepository,
+    @Inject('IUploadUseCase')
+    private readonly uploadUseCase: IUploadUseCase,
   ) {}
 
   async submit(data: ISubmissionRequest, ctx: IUserContext): Promise<{ id: string }> {
@@ -141,5 +145,23 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
       throw new HttpException('Submission not found', HttpStatus.NOT_FOUND);
     }
     return submission;
+  }
+
+  async uploadProof(id: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+    const submission = await this.repository.findById(id, ctx);
+    if (!submission || submission.leaderId !== ctx.id) {
+      throw new HttpException('Submission not found', HttpStatus.NOT_FOUND);
+    }
+
+    const { data, error } = await this.uploadUseCase.execute({
+      file,
+      folder: `submissions/${id}/payment-proof`,
+    });
+
+    if (error) {
+      throw new HttpException(error.message, error.code || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return this.repository.uploadProof(id, data.url, ctx);
   }
 }
