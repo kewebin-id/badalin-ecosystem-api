@@ -25,8 +25,28 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
         flights: true,
         hotels: true,
         transportations: true,
+        agency: {
+          select: {
+            bankName: true,
+            bankAccountName: true,
+            bankAccountNumber: true,
+          },
+        },
         members: {
-          select: { id: true, fullName: true, passportNumber: true },
+          select: {
+            id: true,
+            fullName: true,
+            passportNumber: true,
+            passportExpiry: true,
+            relation: true,
+            nik: true,
+            gender: true,
+            birthDate: true,
+            maritalStatus: true,
+            photoUrl: true,
+            ktpUrl: true,
+            passportUrl: true,
+          },
         },
       },
     });
@@ -59,7 +79,21 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
         skip,
         take: limit,
         include: {
-          members: { select: { id: true, fullName: true, passportNumber: true } },
+          agency: {
+            select: {
+              bankName: true,
+              bankAccountName: true,
+              bankAccountNumber: true,
+            },
+          },
+          members: {
+            select: {
+              id: true,
+              fullName: true,
+              passportNumber: true,
+              relation: true,
+            },
+          },
           leader: { select: { fullName: true, email: true } },
         },
         orderBy: { createdAt: 'desc' },

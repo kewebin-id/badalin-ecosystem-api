@@ -40,6 +40,15 @@ export class PilgrimEntity {
   id: string;
   fullName: string;
   passportNumber: string;
+  passportExpiry?: Date;
+  relation?: string;
+  nik?: string;
+  gender?: string;
+  birthDate?: Date;
+  maritalStatus?: string;
+  photoUrl?: string;
+  ktpUrl?: string;
+  passportUrl?: string;
 }
 
 export class VisaSubmissionEntity {
@@ -56,4 +65,9 @@ export class VisaSubmissionEntity {
   hotels?: HotelManifestEntity[];
   transportations?: TransportationManifestEntity[];
   members?: PilgrimEntity[];
+  agency?: {
+    bankName: string | null;
+    bankAccountName: string | null;
+    bankAccountNumber: string | null;
+  };
 }
