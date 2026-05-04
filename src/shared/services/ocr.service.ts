@@ -30,6 +30,11 @@ export interface OcrResult {
   date?: string;
   flightNumber?: string;
   hotelName?: string;
+  recipientName?: string;
+  recipientAccount?: string;
+  bankName?: string;
+  transferStatus?: string;
+  notes?: string;
   rawText?: string;
   confidence?: number;
   status?: 'SUCCESS' | 'FAILED_QUALITY' | 'FAILED_CHECKSUM' | 'FAILED_TO_EXTRACT';
@@ -443,8 +448,12 @@ export class OcrService {
       confidence,
     };
 
-    // Extract Amount (looking for Rp or numbers followed by .000 or similar)
-    const amountMatch = text.replace(/[.,]/g, '').match(/(?:RP|TOTAL|IDR)\s*(\d+)/i) || 
+    const lines = text.split('\n');
+    const cleanText = text.toUpperCase();
+
+    // 1. Extract Amount
+    // Matches: Rp 1.000.000, IDR 500,000, Total: 200000, etc.
+    const amountMatch = cleanText.replace(/[.,]/g, '').match(/(?:RP|TOTAL|IDR|JUMLAH|NOMINAL)\s*(\d+)/i) || 
                        text.match(/(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?)/);
     
     if (amountMatch) {
@@ -452,19 +461,62 @@ export class OcrService {
       result.amount = parseInt(amountStr, 10);
     }
 
-    // Extract Date
+    // 2. Extract Date
     const dates = this.extractDates(text);
     if (dates.length > 0) result.date = dates[0];
 
-    // Extract Name (Fallback: try to find lines with likely names)
-    const lines = text.split('\n');
-    for (const line of lines) {
-      if (line.toUpperCase().includes('TRANSFER') || line.toUpperCase().includes('DARI') || line.toUpperCase().includes('FROM')) {
-        const namePart = line.replace(/TRANSFER|DARI|FROM|[:;]/gi, '').trim();
+    // 3. Extract Sender Name (From / Dari / Pengirim)
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].toUpperCase();
+      if (line.includes('DARI') || line.includes('FROM') || line.includes('PENGIRIM')) {
+        const namePart = line.replace(/DARI|FROM|PENGIRIM|[:;]/gi, '').trim();
         if (namePart.length > 3) {
           result.fullName = namePart;
-          break;
+        } else if (lines[i+1]) {
+          result.fullName = lines[i+1].trim();
         }
+        break;
+      }
+    }
+
+    // 4. Extract Recipient Name & Account (To / Ke / Penerima)
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].toUpperCase();
+      if (line.includes(' KE ') || line.includes('PENERIMA') || line.includes('TUJUAN') || line.startsWith('KE ') || line.startsWith('TO ')) {
+        const namePart = line.replace(/KE|PENERIMA|TUJUAN|TO|[:;]/gi, '').trim();
+        if (namePart.length > 3) {
+          result.recipientName = namePart;
+        } else if (lines[i+1]) {
+          result.recipientName = lines[i+1].trim();
+        }
+        
+        // Try to find account number in the same line or nearby
+        const accMatch = line.match(/\d{8,20}/) || (lines[i+1] ? lines[i+1].match(/\d{8,20}/) : null);
+        if (accMatch) result.recipientAccount = accMatch[0];
+        break;
+      }
+    }
+
+    // 5. Extract Bank Name
+    const bankKeywords = ['BCA', 'MANDIRI', 'BNI', 'BRI', 'DANAMON', 'CIMB', 'PERMATA', 'BSI', 'BANK'];
+    for (const kw of bankKeywords) {
+      if (cleanText.includes(kw)) {
+        result.bankName = kw;
+        break;
+      }
+    }
+
+    // 6. Extract Status
+    if (cleanText.includes('BERHASIL') || cleanText.includes('SUCCESS') || cleanText.includes('DITERIMA') || cleanText.includes('COMPLETED')) {
+      result.transferStatus = 'BERHASIL';
+    }
+
+    // 7. Extract Notes / Remark
+    for (const line of lines) {
+      const uLine = line.toUpperCase();
+      if (uLine.includes('BERITA') || uLine.includes('CATATAN') || uLine.includes('NOTES') || uLine.includes('REMARK')) {
+        result.notes = line.replace(/BERITA|CATATAN|NOTES|REMARK|[:;]/gi, '').trim();
+        break;
       }
     }
 
