@@ -38,7 +38,17 @@ export interface ISubmissionRequest {
     roomType: string;
     imageUrls: string[];
   }[];
-  transportations: any[];
+  transportations: {
+    type: 'BUS' | 'TRAIN' | 'TAXI' | 'MPV' | 'OTHER';
+    company: string;
+    time: string;
+    date: string;
+    from: string;
+    to: string;
+    totalVehicle: number;
+    totalH?: number | null;
+    imageUrls: string[];
+  }[];
 }
 
 export interface IPilgrimSubmissionUseCase {
@@ -46,5 +56,5 @@ export interface IPilgrimSubmissionUseCase {
   preview(data: ISubmissionRequest, ctx: IUserContext): Promise<IPreviewResponse>;
   getMySubmissions(ctx: IUserContext): Promise<{ data: VisaSubmissionEntity[]; total: number }>;
   getDetail(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
-  uploadProof(id: string, file: any, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  uploadProof(id: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }

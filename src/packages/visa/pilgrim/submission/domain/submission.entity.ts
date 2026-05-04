@@ -51,6 +51,16 @@ export class PilgrimEntity {
   passportUrl?: string;
 }
 
+export interface PaymentProofSnapshot {
+  amount?: number;
+  date?: string;
+  fullName?: string;
+  rawText?: string;
+  confidence?: number;
+  message?: string;
+  [key: string]: any;
+}
+
 export class VisaSubmissionEntity {
   id: string;
   leaderId: string;
@@ -60,6 +70,7 @@ export class VisaSubmissionEntity {
   paymentStatus: PaymentStatus;
   totalAmount: Decimal;
   rejectionReason: string | null;
+  resultSnapshot: PaymentProofSnapshot | null;
 
   flights?: FlightManifestEntity[];
   hotels?: HotelManifestEntity[];

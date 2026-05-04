@@ -2,7 +2,7 @@ import { IAgencySettingsRepository } from '@/packages/visa/provider/agency-setti
 import { clientDb } from '@/shared/utils/db';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { VisaSubmissionEntity } from '../domain/submission.entity';
+import { PaymentProofSnapshot, VisaSubmissionEntity } from '../domain/submission.entity';
 import { IVisaSubmissionRepository } from '../ports/submission.repository.port';
 import {
   IPilgrimSubmissionUseCase,
@@ -46,6 +46,10 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
       ...data,
       agencySlug,
       totalAmount,
+      transportations: data.transportations.map((t) => ({
+        ...t,
+        totalH: t.totalH ?? null,
+      })),
     };
 
     const submission = await this.repository.create(submissionData, ctx);
@@ -156,12 +160,25 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
     const { data, error } = await this.uploadUseCase.execute({
       file,
       fileName: `submissions/${id}/payment-proof`,
+      isOcr: true,
+      ocrType: 'PAYMENT_PROOF',
     });
 
     if (error || !data) {
       throw new HttpException(error?.message || 'Upload failed', error?.code || HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    return this.repository.uploadProof(id, data.publicUrl, ctx);
+    const ocrResult: PaymentProofSnapshot | null = data.ocr
+      ? {
+          amount: data.ocr.amount,
+          date: data.ocr.date,
+          fullName: data.ocr.fullName,
+          rawText: data.ocr.rawText,
+          confidence: data.ocr.confidence,
+          message: data.ocr.message,
+        }
+      : null;
+
+    return this.repository.uploadProof(id, data.publicUrl, ocrResult, ctx);
   }
 }

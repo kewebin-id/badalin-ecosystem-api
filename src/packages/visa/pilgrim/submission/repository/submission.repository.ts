@@ -2,12 +2,7 @@ import { clientDb } from '@/shared/utils/db';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { Injectable } from '@nestjs/common';
 import { FlightType, HotelCity, RoomType, TransportType, VerifyStatus } from '@prisma/client';
-import {
-  FlightManifestEntity,
-  HotelManifestEntity,
-  TransportationManifestEntity,
-  VisaSubmissionEntity,
-} from '../domain/submission.entity';
+import { PaymentProofSnapshot, VisaSubmissionEntity } from '../domain/submission.entity';
 import {
   IManifestsInput,
   IVisaSubmissionCreateInput,
@@ -18,7 +13,7 @@ import {
 export class VisaSubmissionRepository implements IVisaSubmissionRepository {
   private readonly db = clientDb;
 
-  async findById(id: string, ctx?: IUserContext): Promise<VisaSubmissionEntity | null> {
+  async findById(id: string): Promise<VisaSubmissionEntity | null> {
     const submission = await this.db.visaSubmission.findUnique({
       where: { id },
       include: {
@@ -184,11 +179,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     });
   }
 
-  async createManifests(
-    id: string,
-    manifests: IManifestsInput,
-    ctx: IUserContext,
-  ): Promise<VisaSubmissionEntity> {
+  async createManifests(id: string, manifests: IManifestsInput, ctx: IUserContext): Promise<VisaSubmissionEntity> {
     const { flights, hotels, transportations } = manifests;
 
     return this.db.$transaction(async (tx) => {
@@ -230,7 +221,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
         });
       }
 
-      const submission = await this.findById(id, ctx);
+      const submission = await this.findById(id);
       return submission as VisaSubmissionEntity;
     });
   }
@@ -257,15 +248,24 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     return submission as unknown as VisaSubmissionEntity;
   }
 
-  async uploadProof(id: string, proofUrl: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+  async uploadProof(
+    id: string,
+    proofUrl: string,
+    ocrData: PaymentProofSnapshot | null,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
     const submission = await this.db.visaSubmission.update({
       where: { id },
       data: {
         proofOfPayment: proofUrl,
         paymentStatus: 'CHECKING',
+        resultSnapshot: ocrData || undefined,
         updatedBy: ctx.id,
       },
-      include: { members: true },
+      include: {
+        members: true,
+        agency: true,
+      },
     });
 
     return submission as unknown as VisaSubmissionEntity;
