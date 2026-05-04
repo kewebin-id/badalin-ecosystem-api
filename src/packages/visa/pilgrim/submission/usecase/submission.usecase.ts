@@ -155,13 +155,13 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
 
     const { data, error } = await this.uploadUseCase.execute({
       file,
-      folder: `submissions/${id}/payment-proof`,
+      fileName: `submissions/${id}/payment-proof`,
     });
 
-    if (error) {
-      throw new HttpException(error.message, error.code || HttpStatus.INTERNAL_SERVER_ERROR);
+    if (error || !data) {
+      throw new HttpException(error?.message || 'Upload failed', error?.code || HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    return this.repository.uploadProof(id, data.url, ctx);
+    return this.repository.uploadProof(id, data.publicUrl, ctx);
   }
 }
