@@ -12,7 +12,8 @@ export type OcrType =
   | 'DEPARTURE_TICKET'
   | 'RETURN_TICKET'
   | 'HOTEL_MECCA'
-  | 'HOTEL_MEDINA';
+  | 'HOTEL_MEDINA'
+  | 'PAYMENT_PROOF';
 
 export interface OcrResult {
   fullName: string;
@@ -126,6 +127,8 @@ export class OcrService {
         result = this.parsePassport(text, confidence);
       } else if (type === 'KTP') {
         result = this.parseKtp(text, confidence);
+      } else if (type === 'PAYMENT_PROOF') {
+        result = this.parsePaymentProof(text, confidence);
       } else {
         result = this.parseLogistics(text, confidence);
       }
@@ -429,6 +432,41 @@ export class OcrService {
 
     const hotelNames = text.match(/Hotel\s+([A-Z\s]+)/i);
     if (hotelNames) result.hotelName = hotelNames[1].trim();
+
+    return result;
+  }
+
+  private parsePaymentProof(text: string, confidence: number): OcrResult {
+    const result: OcrResult = {
+      fullName: '',
+      rawText: text,
+      confidence,
+    };
+
+    // Extract Amount (looking for Rp or numbers followed by .000 or similar)
+    const amountMatch = text.replace(/[.,]/g, '').match(/(?:RP|TOTAL|IDR)\s*(\d+)/i) || 
+                       text.match(/(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?)/);
+    
+    if (amountMatch) {
+      const amountStr = amountMatch[1].replace(/[.,]/g, '');
+      result.amount = parseInt(amountStr, 10);
+    }
+
+    // Extract Date
+    const dates = this.extractDates(text);
+    if (dates.length > 0) result.date = dates[0];
+
+    // Extract Name (Fallback: try to find lines with likely names)
+    const lines = text.split('\n');
+    for (const line of lines) {
+      if (line.toUpperCase().includes('TRANSFER') || line.toUpperCase().includes('DARI') || line.toUpperCase().includes('FROM')) {
+        const namePart = line.replace(/TRANSFER|DARI|FROM|[:;]/gi, '').trim();
+        if (namePart.length > 3) {
+          result.fullName = namePart;
+          break;
+        }
+      }
+    }
 
     return result;
   }
