@@ -55,6 +55,11 @@ export interface PaymentProofSnapshot {
   amount?: number;
   date?: string;
   fullName?: string;
+  recipientName?: string;
+  recipientAccount?: string;
+  bankName?: string;
+  transferStatus?: string;
+  notes?: string;
   rawText?: string;
   confidence?: number;
   message?: string;
