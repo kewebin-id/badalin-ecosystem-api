@@ -19,6 +19,18 @@ export class AgencySettingsRepository implements IAgencySettingsRepository {
     });
   }
 
+  async create(data: Partial<Agency>): Promise<Agency> {
+    return this.prisma.agency.create({
+      data: {
+        name: data.name || 'New Agency',
+        slug: data.slug!,
+        visaPrice: data.visaPrice || 0,
+        isActive: true,
+        createdBy: data.createdBy,
+      },
+    });
+  }
+
   async update(id: string, data: Partial<Agency>, oldSlug?: string): Promise<Agency> {
     const { slug, ...otherData } = data;
 
