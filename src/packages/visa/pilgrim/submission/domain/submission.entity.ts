@@ -63,6 +63,7 @@ export interface PaymentProofSnapshot {
   rawText?: string;
   confidence?: number;
   message?: string;
+  [key: string]: any;
 }
 
 export class VisaSubmissionEntity {
