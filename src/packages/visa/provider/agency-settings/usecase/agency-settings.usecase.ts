@@ -178,5 +178,21 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
         },
       };
     }
+  async validateSession(providerId: string): Promise<IUsecaseResponse<{ valid: boolean }>> {
+    try {
+      const user = await this.authRepository.findByIdentifier(providerId);
+      if (!user || !user.agencySlug) {
+        return { data: { valid: false } };
+      }
+
+      const agency = await this.repository.findBySlug(user.agencySlug);
+      if (!agency) {
+        return { data: { valid: false } };
+      }
+
+      return { data: { valid: true } };
+    } catch (error) {
+      return { data: { valid: false } };
+    }
   }
 }
