@@ -4,3 +4,4 @@ export * from './document.module';
 export * from './submission.module';
 export * from './pilgrim.module';
 export * from './agency.module';
+export * from './provider-dashboard.module';

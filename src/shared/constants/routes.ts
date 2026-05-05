@@ -16,6 +16,7 @@ export enum EVisaRoutes {
   // Provider Features
   PROVIDER_AUTH = `${EActorPrefix.PROVIDER}/auth`,
   PROVIDER_AGENCY = `${EActorPrefix.PROVIDER}/agency`,
+  PROVIDER_DASHBOARD = `${EActorPrefix.PROVIDER}/dashboard`,
   PROVIDER_VERIFICATION = `${EActorPrefix.PROVIDER}/submissions`,
   PROVIDER_MANIFEST = `${EActorPrefix.PROVIDER}/submissions`,
   
