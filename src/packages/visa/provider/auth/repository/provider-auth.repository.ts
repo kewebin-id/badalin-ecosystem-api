@@ -12,7 +12,7 @@ export class ProviderAuthRepository implements IProviderAuthRepository {
     try {
       return await this.db.user.findFirst({
         where: {
-          OR: [{ email: identifier }, { phoneNumber: identifier }],
+          OR: [{ id: identifier }, { email: identifier }, { phoneNumber: identifier }],
         },
         include: { agency: true, pilgrimProfile: true },
       });

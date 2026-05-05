@@ -23,11 +23,11 @@ export class AgencySettingsController {
 
   @Get()
   async getAgency(@UserContext() ctx: IUserContext) {
-    return this.useCase.getAgencyData(ctx.email);
+    return this.useCase.getAgencyData(ctx.id);
   }
 
   @Patch()
   async updateSettings(@UserContext() ctx: IUserContext, @Body() dto: UpdateAgencySettingsDto) {
-    return this.useCase.updateAgencySettings(ctx.email, dto);
+    return this.useCase.updateAgencySettings(ctx.id, dto);
   }
 }
