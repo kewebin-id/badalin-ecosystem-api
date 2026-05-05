@@ -15,4 +15,5 @@ export interface IProviderAuthRepository {
   updateResetToken: (userId: string, token: string | null, expiresAt: Date | null, updatedBy?: string) => Promise<void>;
   findByResetToken: (token: string) => Promise<User | null>;
   updatePassword: (userId: string, targetPassword: string, updatedBy?: string) => Promise<void>;
+  updateAgencySlug: (userId: string, agencySlug: string) => Promise<void>;
 }

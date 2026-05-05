@@ -144,4 +144,16 @@ export class ProviderAuthRepository implements IProviderAuthRepository {
       throw error;
     }
   };
+
+  updateAgencySlug = async (userId: string, agencySlug: string): Promise<void> => {
+    try {
+      await this.db.user.update({
+        where: { id: userId },
+        data: { agencySlug },
+      });
+    } catch (error) {
+      Logger.error('Error in updateAgencySlug (Provider):', error);
+      throw error;
+    }
+  };
 }

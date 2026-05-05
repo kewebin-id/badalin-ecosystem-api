@@ -1,12 +1,13 @@
-import { Controller, Get, Patch, Query, Body, Inject, UseGuards, Param } from '@nestjs/common';
 import { EVisaRoutes } from '@/shared/constants';
-import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
-import { SlugGuard } from '@/shared/guards/slug.guard';
-import { ReservedWordGuard } from '@/shared/guards/reserved-word.guard';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
+import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
+import { ReservedWordGuard } from '@/shared/guards/reserved-word.guard';
+import { SlugGuard } from '@/shared/guards/slug.guard';
+import { response } from '@/shared/utils/rest-api/response';
 import { IUserContext } from '@/shared/utils/rest-api/types';
-import { IAgencySettingsUseCase } from '../ports/agency-settings.usecase.port';
+import { Body, Controller, Get, HttpStatus, Inject, Patch, Query, UseGuards } from '@nestjs/common';
 import { UpdateAgencySettingsDto } from '../dto/agency-settings.dto';
+import { IAgencySettingsUseCase } from '../ports/agency-settings.usecase.port';
 
 @Controller(EVisaRoutes.PROVIDER_AGENCY)
 @UseGuards(JwtAuthGuard, SlugGuard, ReservedWordGuard)
@@ -28,6 +29,12 @@ export class AgencySettingsController {
 
   @Patch()
   async updateSettings(@UserContext() ctx: IUserContext, @Body() dto: UpdateAgencySettingsDto) {
-    return this.useCase.updateAgencySettings(ctx.id, dto);
+    const res = await this.useCase.updateAgencySettings(ctx.id, dto);
+
+    if (res.error) {
+      return response[HttpStatus.BAD_REQUEST](res, { message: res.error.message });
+    }
+
+    return response[HttpStatus.OK](res, { message: 'Agency settings updated successfully', data: res.data });
   }
 }

@@ -1,12 +1,12 @@
+import { IProviderAuthRepository } from '@/packages/visa/provider/auth';
 import { IUsecaseResponse } from '@/shared/utils';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { Agency } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
+import { Agency, Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
-import { IProviderAuthRepository } from '@/packages/visa/provider/auth';
 import { UpdateAgencySettingsDto } from '../dto/agency-settings.dto';
 import { IAgencySettingsRepository } from '../ports/agency-settings.repository.port';
 import { IAgencySettingsUseCase } from '../ports/agency-settings.usecase.port';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AgencySettingsUseCase implements IAgencySettingsUseCase {
@@ -60,14 +60,37 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
     }
   }
 
-  async updateAgencySettings(providerId: string, dto: UpdateAgencySettingsDto): Promise<IUsecaseResponse<Agency>> {
+  async updateAgencySettings(
+    providerId: string,
+    dto: UpdateAgencySettingsDto,
+  ): Promise<IUsecaseResponse<Agency & { newToken?: string }>> {
     try {
       const user = await this.authRepository.findByIdentifier(providerId);
-      if (!user || !user.agencySlug) {
-        throw new HttpException('Agency not found', HttpStatus.NOT_FOUND);
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      const agency = await this.repository.findBySlug(user.agencySlug);
+      const isFirstTimeSetup = !user?.agencySlug || user?.agencySlug === 'p';
+
+      if (isFirstTimeSetup && dto?.slug) {
+        const existing = await this.repository.findBySlug(dto?.slug);
+        if (existing) {
+          throw new HttpException('Slug is already taken', HttpStatus.CONFLICT);
+        }
+
+        const newAgency = await this.repository.create({
+          name: dto.name || user.fullName || 'New Agency',
+          slug: dto.slug,
+          visaPrice: new Prisma.Decimal(0),
+          createdBy: user.id,
+        });
+
+        await this.authRepository.updateAgencySlug(user.id, newAgency.slug);
+
+        user.agencySlug = newAgency.slug;
+      }
+
+      const agency = await this.repository.findBySlug(user.agencySlug!);
       if (!agency) {
         throw new HttpException('Agency data not found', HttpStatus.NOT_FOUND);
       }
@@ -78,7 +101,7 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
           throw new HttpException('Slug is already taken', HttpStatus.CONFLICT);
         }
 
-        const isInitialSetup = agency.slug.startsWith('temp-');
+        const isInitialSetup = agency.slug.startsWith('temp-') || agency.slug === 'p';
 
         if (!isInitialSetup) {
           const lastUpdate = dayjs(agency.lastSlugUpdate);
@@ -113,7 +136,7 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
         data: {
           ...updatedAgency,
           newToken,
-        } as any,
+        },
       };
     } catch (error) {
       return {
