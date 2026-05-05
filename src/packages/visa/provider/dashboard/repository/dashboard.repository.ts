@@ -52,7 +52,8 @@ export class ProviderDashboardRepository implements IProviderDashboardRepository
 
     return activities.map((a) => ({
       id: a.id,
-      description: `${a.leader.fullName} - Status: ${a.verifyStatus}`,
+      description: a.leader.fullName || 'Unknown',
+      status: a.verifyStatus,
       timestamp: a.updatedAt,
       type: this.getActivityType(a.verifyStatus as any),
     }));
@@ -76,8 +77,7 @@ export class ProviderDashboardRepository implements IProviderDashboardRepository
         const count = await this.db.visaSubmission.count({
           where: {
             agencySlug,
-            verifyStatus: VerifyStatus.VERIFIED,
-            updatedAt: {
+            createdAt: {
               gte: date.toDate(),
               lt: date.endOf('month').toDate(),
             },
