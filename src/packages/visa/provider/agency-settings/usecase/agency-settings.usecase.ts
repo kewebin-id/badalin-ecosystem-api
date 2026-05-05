@@ -22,12 +22,22 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
     try {
       const user = await this.authRepository.findByIdentifier(providerId);
       if (!user || !user.agencySlug) {
-        throw new HttpException('Agency not found', HttpStatus.NOT_FOUND);
+        return {
+          error: {
+            message: 'Agency not found',
+            code: HttpStatus.NOT_FOUND,
+          },
+        };
       }
 
       const agency = await this.repository.findBySlug(user.agencySlug);
       if (!agency) {
-        throw new HttpException('Agency data not found', HttpStatus.NOT_FOUND);
+        return {
+          error: {
+            message: 'Agency data not found',
+            code: HttpStatus.NOT_FOUND,
+          },
+        };
       }
 
       return {
@@ -67,7 +77,12 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
     try {
       const user = await this.authRepository.findByIdentifier(providerId);
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        return {
+          error: {
+            message: 'User not found',
+            code: HttpStatus.NOT_FOUND,
+          },
+        };
       }
 
       const isFirstTimeSetup = !user?.agencySlug || user?.agencySlug === 'p';
@@ -75,7 +90,12 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
       if (isFirstTimeSetup && dto?.slug) {
         const existing = await this.repository.findBySlug(dto?.slug);
         if (existing) {
-          throw new HttpException('Slug is already taken', HttpStatus.CONFLICT);
+          return {
+            error: {
+              message: 'Slug is already taken',
+              code: HttpStatus.CONFLICT,
+            },
+          };
         }
 
         const newAgency = await this.repository.create({
@@ -92,13 +112,23 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
 
       const agency = await this.repository.findBySlug(user.agencySlug!);
       if (!agency) {
-        throw new HttpException('Agency data not found', HttpStatus.NOT_FOUND);
+        return {
+          error: {
+            message: 'Agency data not found',
+            code: HttpStatus.NOT_FOUND,
+          },
+        };
       }
 
       if (dto.slug && dto.slug !== agency.slug) {
         const existing = await this.repository.findBySlug(dto.slug);
         if (existing) {
-          throw new HttpException('Slug is already taken', HttpStatus.CONFLICT);
+          return {
+            error: {
+              message: 'Slug is already taken',
+              code: HttpStatus.CONFLICT,
+            },
+          };
         }
 
         const isInitialSetup = agency.slug.startsWith('temp-') || agency.slug === 'p';
@@ -110,10 +140,12 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
 
           if (daysSinceLastUpdate < 90) {
             const daysToWait = 90 - daysSinceLastUpdate;
-            throw new HttpException(
-              `Slug can only be changed once every 3 months. Please wait ${daysToWait} more day(s).`,
-              HttpStatus.BAD_REQUEST,
-            );
+            return {
+              error: {
+                code: 400,
+                message: `Slug can only be changed once every 3 months. Please wait ${daysToWait} more day(s).`,
+              },
+            };
           }
         }
       }
