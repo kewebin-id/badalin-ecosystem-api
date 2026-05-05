@@ -22,6 +22,11 @@ export class AgencySettingsController {
   async checkSlug(@Query('slug') slug: string) {
     return this.useCase.checkSlugAvailability(slug);
   }
+  
+  @Get('validate')
+  async validateSession(@UserContext() ctx: IUserContext) {
+    return this.useCase.validateSession(ctx.id);
+  }
 
   @Get()
   async getAgency(@UserContext() ctx: IUserContext) {

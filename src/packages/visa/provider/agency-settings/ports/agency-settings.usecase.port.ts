@@ -6,4 +6,5 @@ export interface IAgencySettingsUseCase {
   getAgencyData(providerId: string): Promise<IUsecaseResponse<Agency>>;
   checkSlugAvailability(slug: string): Promise<IUsecaseResponse<{ available: boolean }>>;
   updateAgencySettings(providerId: string, dto: UpdateAgencySettingsDto): Promise<IUsecaseResponse<Agency>>;
+  validateSession(providerId: string): Promise<IUsecaseResponse<{ valid: boolean }>>;
 }
