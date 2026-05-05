@@ -178,6 +178,8 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
         },
       };
     }
+  }
+
   async validateSession(providerId: string): Promise<IUsecaseResponse<{ valid: boolean }>> {
     try {
       const user = await this.authRepository.findByIdentifier(providerId);
