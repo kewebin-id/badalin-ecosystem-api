@@ -7,6 +7,8 @@ export class FlightManifestEntity {
   flightNo: string;
   carrier: string;
   flightDate: Date;
+  from: string | null;
+  to: string | null;
   eta: Date;
   etd: Date;
   imageUrls: string[];

@@ -24,6 +24,8 @@ export interface ISubmissionRequest {
     type: 'DEPARTURE' | 'RETURN';
     flightNo: string;
     carrier: string;
+    from?: string;
+    to?: string;
     flightDate: string;
     eta: string;
     etd: string;

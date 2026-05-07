@@ -9,4 +9,6 @@ export class ReviewSubmissionDto {
   @IsString()
   @IsOptional()
   rejectionReason?: string;
+  @IsOptional()
+  resultSnapshot?: any;
 }

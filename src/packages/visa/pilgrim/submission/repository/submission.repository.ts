@@ -237,14 +237,26 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     id: string,
     status: VerifyStatus,
     reason: string | null,
+    resultSnapshot: any | null,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
+    const existing = await this.db.visaSubmission.findUnique({
+      where: { id },
+      select: { resultSnapshot: true },
+    });
+
+    const mergedSnapshot = {
+      ...(existing?.resultSnapshot as object || {}),
+      ...(resultSnapshot || {}),
+    };
+
     const submission = await this.db.visaSubmission.update({
       where: { id },
       data: {
         verifyStatus: status,
         status: status,
         rejectionReason: reason,
+        resultSnapshot: mergedSnapshot,
         verifierId: ctx.id,
         verifiedAt: new Date(),
         updatedBy: ctx.id,
