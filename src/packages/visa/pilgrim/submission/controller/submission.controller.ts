@@ -35,8 +35,7 @@ export class PilgrimSubmissionController {
       return {
         code: HttpStatus.OK,
         message: 'Success fetch submissions',
-        data: result.data,
-        total: result.total,
+        data: result,
       };
     } catch (error) {
       throw new HttpException(error instanceof Error ? error.message : 'Internal server error', 500);

@@ -29,8 +29,22 @@ export class VerificationUseCase implements IVerificationUseCase {
   async findAll(
     params: { page?: number; limit?: number; search?: string },
     ctx: IUserContext,
-  ): Promise<{ data: VisaSubmissionEntity[]; total: number }> {
-    return this.repository.findAll(params, ctx);
+  ): Promise<{ 
+    items: VisaSubmissionEntity[]; 
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const { data: items, total } = await this.repository.findAll({ ...params, page, limit }, ctx);
+    
+    return {
+      items,
+      totalItems: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
   }
 
   async verifyPayment(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
