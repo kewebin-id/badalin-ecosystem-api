@@ -27,12 +27,7 @@ export class VerificationController {
     return {
       code: HttpStatus.OK,
       message: 'Submissions retrieved successfully',
-      data: result.data,
-      meta: {
-        total: result.total,
-        page: Number(page) || 1,
-        limit: Number(limit) || 10,
-      },
+      data: result,
     };
   }
 

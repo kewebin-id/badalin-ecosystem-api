@@ -6,7 +6,13 @@ export interface IVerificationUseCase {
   findAll(
     params: { page?: number; limit?: number; search?: string },
     ctx: IUserContext,
-  ): Promise<{ data: VisaSubmissionEntity[]; total: number }>;
+  ): Promise<{ 
+    items: VisaSubmissionEntity[]; 
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }>;
+
 
   verifyPayment(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
   

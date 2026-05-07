@@ -139,8 +139,22 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
     };
   }
 
-  async getMySubmissions(ctx: IUserContext): Promise<{ data: VisaSubmissionEntity[]; total: number }> {
-    return this.repository.findAll({ page: 1, limit: 100 }, ctx);
+  async getMySubmissions(ctx: IUserContext): Promise<{ 
+    items: VisaSubmissionEntity[]; 
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
+    const limit = 100;
+    const page = 1;
+    const { data: items, total } = await this.repository.findAll({ page, limit }, ctx);
+    
+    return {
+      items,
+      totalItems: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+    };
   }
 
   async getDetail(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
