@@ -43,6 +43,13 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
             passportUrl: true,
           },
         },
+        leader: {
+          select: {
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
       },
     });
 
