@@ -46,6 +46,11 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
       ...data,
       agencySlug,
       totalAmount,
+      flights: data.flights.map((f) => ({
+        ...f,
+        from: f.from ?? null,
+        to: f.to ?? null,
+      })),
       transportations: data.transportations.map((t) => ({
         ...t,
         totalH: t.totalH ?? null,
