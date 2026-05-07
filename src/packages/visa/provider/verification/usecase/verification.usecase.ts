@@ -54,4 +54,8 @@ export class VerificationUseCase implements IVerificationUseCase {
 
     return this.repository.review(id, dto.status, dto.rejectionReason || null, ctx);
   }
+
+  async findOne(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+    return this.validateOwnership(id, ctx);
+  }
 }

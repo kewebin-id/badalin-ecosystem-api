@@ -11,4 +11,6 @@ export interface IVerificationUseCase {
   verifyPayment(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
   
   review(id: string, dto: ReviewSubmissionDto, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+
+  findOne(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }
