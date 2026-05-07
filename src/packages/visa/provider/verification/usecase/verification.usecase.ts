@@ -66,7 +66,7 @@ export class VerificationUseCase implements IVerificationUseCase {
       throw new HttpException('Rejection reason is mandatory when status is REJECTED', HttpStatus.BAD_REQUEST);
     }
 
-    return this.repository.review(id, dto.status, dto.rejectionReason || null, ctx);
+    return this.repository.review(id, dto.status, dto.rejectionReason || null, dto.resultSnapshot || null, ctx);
   }
 
   async findOne(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {

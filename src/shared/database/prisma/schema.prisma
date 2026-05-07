@@ -186,6 +186,8 @@ model FlightManifest {
   flightNo     String         @map("flight_no")
   carrier      String
   flightDate   DateTime       @map("flight_date")
+  from         String?
+  to           String?
   eta          DateTime       @map("eta")
   etd          DateTime       @map("etd")
   imageUrls    String[]       @default([]) @map("image_urls")
