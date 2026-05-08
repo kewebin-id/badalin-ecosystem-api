@@ -5,6 +5,7 @@ import { FlightType, HotelCity, RoomType, TransportType, VerifyStatus } from '@p
 import { PaymentProofSnapshot, VisaSubmissionEntity } from '../domain/submission.entity';
 import {
   IManifestsInput,
+  IMemberReview,
   IVisaSubmissionCreateInput,
   IVisaSubmissionRepository,
 } from '../ports/submission.repository.port';
@@ -25,6 +26,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
             bankName: true,
             bankAccountName: true,
             bankAccountNumber: true,
+            status: true,
           },
         },
         members: {
@@ -238,33 +240,75 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     status: VerifyStatus,
     reason: string | null,
     resultSnapshot: any | null,
+    memberReviews: IMemberReview[] | null,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
     const existing = await this.db.visaSubmission.findUnique({
       where: { id },
-      select: { resultSnapshot: true },
+      include: { agency: true },
     });
+
+    if (!existing) throw new Error('Submission not found');
 
     const mergedSnapshot = {
       ...(existing?.resultSnapshot as object || {}),
       ...(resultSnapshot || {}),
     };
 
-    const submission = await this.db.visaSubmission.update({
-      where: { id },
-      data: {
-        verifyStatus: status,
-        status: status,
-        rejectionReason: reason,
-        resultSnapshot: mergedSnapshot,
-        verifierId: ctx.id,
-        verifiedAt: new Date(),
-        updatedBy: ctx.id,
-      },
-      include: { members: true },
-    });
+    let refundAmount = 0;
+    let refundStatus = 'NONE';
+    let refundDeadline: Date | null = null;
 
-    return submission as unknown as VisaSubmissionEntity;
+    return this.db.$transaction(async (tx) => {
+      // 1. Update individual pilgrims if memberReviews provided
+      if (memberReviews && memberReviews.length > 0) {
+        for (const m of memberReviews) {
+          await tx.pilgrim.update({
+            where: { id: m.id },
+            data: {
+              isEligible: m.isEligible,
+              rejectionReason: m.rejectionReason,
+              updatedBy: ctx.id,
+            },
+          });
+        }
+
+        // Calculate refund if payment is already COMPLETED
+        if (existing.paymentStatus === 'COMPLETED') {
+          const rejectedCount = memberReviews.filter((m) => !m.isEligible).length;
+          if (rejectedCount > 0) {
+            const visaPrice = Number(existing.agency.visaPrice);
+            refundAmount = rejectedCount * visaPrice;
+            refundStatus = 'PENDING';
+            refundDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+          }
+        }
+      }
+
+      const submission = await tx.visaSubmission.update({
+        where: { id },
+        data: {
+          verifyStatus: status,
+          status: status,
+          rejectionReason: reason,
+          resultSnapshot: mergedSnapshot,
+          verifierId: ctx.id,
+          verifiedAt: new Date(),
+          refundAmount,
+          refundStatus,
+          refundDeadline,
+          updatedBy: ctx.id,
+        },
+        include: {
+          members: true,
+          flights: true,
+          hotels: true,
+          transportations: true,
+        },
+      });
+
+      return submission as unknown as VisaSubmissionEntity;
+    });
   }
 
   async uploadProof(

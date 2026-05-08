@@ -48,6 +48,8 @@ export class PilgrimEntity {
   gender?: string;
   birthDate?: Date;
   maritalStatus?: string;
+  isEligible?: boolean;
+  rejectionReason?: string | null;
   photoUrl?: string;
   ktpUrl?: string;
   passportUrl?: string;
@@ -76,6 +78,9 @@ export class VisaSubmissionEntity {
   verifyStatus: VerifyStatus;
   paymentStatus: PaymentStatus;
   totalAmount: Decimal;
+  refundAmount: Decimal;
+  refundStatus: string | null;
+  refundDeadline: Date | null;
   rejectionReason: string | null;
   resultSnapshot: PaymentProofSnapshot | null;
 
