@@ -52,6 +52,12 @@ export interface IManifestsInput {
   })[];
 }
 
+export interface IMemberReview {
+  id: string;
+  isEligible: boolean;
+  rejectionReason?: string | null;
+}
+
 export interface IVisaSubmissionRepository {
   findById(id: string, ctx?: IUserContext): Promise<VisaSubmissionEntity | null>;
   findAll(
@@ -69,6 +75,13 @@ export interface IVisaSubmissionRepository {
   ): Promise<VisaSubmissionEntity>;
 
   createManifests(id: string, manifests: IManifestsInput, ctx: IUserContext): Promise<VisaSubmissionEntity>;
-  review(id: string, status: VerifyStatus, reason: string | null, resultSnapshot: any | null, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  review(
+    id: string,
+    status: VerifyStatus,
+    reason: string | null,
+    resultSnapshot: any | null,
+    memberReviews: IMemberReview[] | null,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity>;
   uploadProof(id: string, proofUrl: string, ocrData: PaymentProofSnapshot | null, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }

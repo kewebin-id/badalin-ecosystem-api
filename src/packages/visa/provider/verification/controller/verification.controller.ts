@@ -3,6 +3,7 @@ import { EActorPrefix } from '@/shared/constants';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { SlugGuard } from '@/shared/guards/slug.guard';
 import { ReservedWordGuard } from '@/shared/guards/reserved-word.guard';
+import { AgencyStatusGuard } from '@/shared/guards/agency-status.guard';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { IVerificationUseCase } from '../ports/verification.usecase.port';
@@ -32,6 +33,7 @@ export class VerificationController {
   }
 
   @Patch('submissions/:id/verify-payment')
+  @UseGuards(AgencyStatusGuard)
   async verifyPayment(@Param('id') id: string, @UserContext() ctx: IUserContext) {
     const result = await this.useCase.verifyPayment(id, ctx);
     return {
@@ -42,6 +44,7 @@ export class VerificationController {
   }
 
   @Patch('submissions/:id/review')
+  @UseGuards(AgencyStatusGuard)
   async review(@Param('id') id: string, @Body() dto: ReviewSubmissionDto, @UserContext() ctx: IUserContext) {
     const result = await this.useCase.review(id, dto, ctx);
     return {
