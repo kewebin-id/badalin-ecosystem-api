@@ -15,4 +15,5 @@ export interface IAgencySettingsUseCase {
     dto: UpdateAgencySettingsDto,
   ): Promise<IUsecaseResponse<IAgencyResponse>>;
   validateSession(providerId: string): Promise<IUsecaseResponse<{ valid: boolean }>>;
+  validateSlug(slug: string): Promise<IUsecaseResponse<{ name: string }>>;
 }
