@@ -17,6 +17,7 @@ enum VerifyStatus {
   VERIFIED
   REJECTED
   AUTO_CANCELED
+  ISSUED
 }
 
 enum PaymentStatus {
@@ -155,7 +156,7 @@ model VisaSubmission {
   leaderId        String        @map("leader_id")
   agencySlug      String        @map("agency_slug")
   status          VerifyStatus  @default(IN_REVIEW) @map("status")
-  verifyStatus    VerifyStatus  @default(IN_REVIEW) @map("verify_status")
+  reviewStatus    VerifyStatus  @default(IN_REVIEW) @map("review_status")
   verifierId      String?       @map("verifier_id")
   verifiedAt      DateTime?     @map("verified_at")
   resultSnapshot  Json?         @map("result_snapshot")

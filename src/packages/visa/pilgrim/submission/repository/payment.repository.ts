@@ -24,7 +24,7 @@ export class PaymentRepository implements IPaymentRepository {
       where: { id },
       data: {
         status: VerifyStatus.AUTO_CANCELED,
-        verifyStatus: VerifyStatus.AUTO_CANCELED,
+        reviewStatus: VerifyStatus.AUTO_CANCELED,
       },
     });
   };

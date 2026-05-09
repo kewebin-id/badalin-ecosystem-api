@@ -2,7 +2,7 @@ import { clientDb } from '@/shared/utils/db';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { Injectable } from '@nestjs/common';
 import { FlightType, HotelCity, Prisma, RoomType, TransportType, VerifyStatus } from '@prisma/client';
-import { PaymentProofSnapshot, VisaSubmissionEntity } from '../domain/submission.entity';
+import { ISubmissionResultSnapshot, PaymentProofSnapshot, VisaSubmissionEntity } from '../domain/submission.entity';
 import {
   IManifestsInput,
   IMemberReview,
@@ -254,8 +254,9 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
 
     if (!existing) throw new Error('Submission not found');
 
-    const mergedSnapshot = {
-      ...((existing?.resultSnapshot as object) || {}),
+    const currentSnapshot = (existing.resultSnapshot as unknown as ISubmissionResultSnapshot) || {};
+    const mergedSnapshot: ISubmissionResultSnapshot = {
+      ...currentSnapshot,
       ...(resultSnapshot || {}),
     };
 
@@ -292,7 +293,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       const submission = await tx.visaSubmission.update({
         where: { id },
         data: {
-          verifyStatus: status,
+          reviewStatus: status,
           status: status,
           rejectionReason: reason,
           resultSnapshot: mergedSnapshot,
@@ -359,18 +360,20 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       }
     }
 
-    const currentSnapshot = (submission.resultSnapshot as any) || {};
-    const updatedSnapshot = {
+    const currentSnapshot = (submission.resultSnapshot as unknown as ISubmissionResultSnapshot) || {};
+    const updatedSnapshot: ISubmissionResultSnapshot = {
       ...currentSnapshot,
       visaUrls,
+      issuedAt: new Date(),
     };
 
     const updated = await this.db.visaSubmission.update({
       where: { id },
       data: {
-        resultSnapshot: updatedSnapshot as any,
+        reviewStatus: 'ISSUED',
+        status: 'ISSUED',
+        resultSnapshot: updatedSnapshot as unknown as Prisma.InputJsonValue,
         updatedBy: ctx.id,
-        // Trigger any side effects here if needed
       },
       include: {
         members: true,
