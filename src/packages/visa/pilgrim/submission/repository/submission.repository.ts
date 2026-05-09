@@ -341,29 +341,20 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
 
   async submitVisas(
     id: string,
-    visaFiles: Record<string, { name: string; base64: string }[]>,
+    visaUrls: Record<string, string>,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
     const submission = await this.db.visaSubmission.findUnique({
       where: { id },
+      include: { members: true },
     });
 
     if (!submission) throw new Error('Submission not found');
 
-    const visaUrls: Record<string, string> = {};
-    const { uploadFile } = await import('@/shared/utils/upload.util');
-
-    for (const [memberId, files] of Object.entries(visaFiles)) {
-      if (files && files.length > 0) {
-        const url = await uploadFile(files[0].base64, 'visas', `visa-${id}-${memberId}`);
-        visaUrls[memberId] = url;
-      }
-    }
-
     const currentSnapshot = (submission.resultSnapshot as unknown as ISubmissionResultSnapshot) || {};
     const updatedSnapshot: ISubmissionResultSnapshot = {
       ...currentSnapshot,
-      visaUrls,
+      visaUrls: { ...(currentSnapshot.visaUrls || {}), ...visaUrls },
       issuedAt: new Date(),
     };
 
@@ -371,8 +362,8 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       await tx.visaSubmission.update({
         where: { id },
         data: {
-          reviewStatus: 'ISSUED',
-          status: 'ISSUED',
+          reviewStatus: VerifyStatus.ISSUED,
+          status: VerifyStatus.ISSUED,
           resultSnapshot: updatedSnapshot as unknown as Prisma.InputJsonValue,
           updatedBy: ctx.id,
         },
@@ -380,26 +371,21 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
 
       // Update each pilgrim with their specific visa URL
       for (const [memberId, url] of Object.entries(visaUrls)) {
-        await tx.pilgrim.update({
-          where: { id: memberId },
-          data: {
-            visaUrl: url,
-            updatedBy: ctx.id,
-          },
-        });
+        const exists = submission.members.some((m) => m.id === memberId);
+        if (exists) {
+          await tx.pilgrim.update({
+            where: { id: memberId },
+            data: {
+              visaUrl: url,
+              updatedBy: ctx.id,
+            },
+          });
+        }
       }
     });
 
-    const updated = await this.db.visaSubmission.findUnique({
-      where: { id },
-      include: {
-        members: true,
-        flights: true,
-        hotels: true,
-        transportations: true,
-      },
-    });
-
-    return updated as unknown as VisaSubmissionEntity;
+    const result = await this.findById(id);
+    if (!result) throw new Error('Submission not found after update');
+    return result;
   }
 }

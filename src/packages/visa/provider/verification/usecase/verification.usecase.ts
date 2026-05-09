@@ -80,12 +80,49 @@ export class VerificationUseCase implements IVerificationUseCase {
     return this.validateOwnership(id, ctx);
   }
 
-  async submitVisas(
+  async uploadVisas(
     id: string,
     visaFiles: Record<string, { name: string; base64: string }[]>,
     ctx: IUserContext,
-  ): Promise<VisaSubmissionEntity> {
+  ): Promise<Record<string, string>> {
     await this.validateOwnership(id, ctx);
-    return this.repository.submitVisas(id, visaFiles, ctx);
+
+    const { uploadFile } = await import('@/shared/utils/upload.util');
+    const visaUrls: Record<string, string> = {};
+
+    // Parallel uploads for better performance
+    await Promise.all(
+      Object.entries(visaFiles).map(async ([memberId, files]) => {
+        if (files && files.length > 0 && files[0].base64) {
+          try {
+            const url = await uploadFile(files[0].base64, 'visas', `visa-${id}-${memberId}`);
+            visaUrls[memberId] = url;
+          } catch (uploadError) {
+            console.error(`[UploadVisas] Failed to upload for member ${memberId}:`, uploadError);
+            throw new HttpException(`Failed to upload visa for member ${memberId}`, HttpStatus.INTERNAL_SERVER_ERROR);
+          }
+        }
+      }),
+    );
+
+    return visaUrls;
+  }
+
+  async submitVisas(
+    id: string,
+    visaUrls: Record<string, string>,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
+    const submission = await this.validateOwnership(id, ctx);
+
+    // Business Validation: Payment must be completed
+    if (submission.paymentStatus !== PaymentStatus.COMPLETED) {
+      throw new HttpException(
+        'Cannot issue visas: Payment has not been completed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return this.repository.submitVisas(id, visaUrls, ctx);
   }
 }

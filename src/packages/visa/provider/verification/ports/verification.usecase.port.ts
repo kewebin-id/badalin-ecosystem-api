@@ -20,9 +20,15 @@ export interface IVerificationUseCase {
 
   findOne(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 
-  submitVisas(
+  uploadVisas(
     id: string,
     visaFiles: Record<string, { name: string; base64: string }[]>,
+    ctx: IUserContext,
+  ): Promise<Record<string, string>>;
+
+  submitVisas(
+    id: string,
+    visaUrls: Record<string, string>,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity>;
 }
