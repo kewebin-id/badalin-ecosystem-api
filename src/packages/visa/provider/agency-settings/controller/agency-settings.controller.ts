@@ -2,6 +2,7 @@ import { EVisaRoutes } from '@/shared/constants';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { Response } from 'express';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
+import { ApiKeyGuard } from '@/shared/guards/api-key.guard';
 import { ReservedWordGuard } from '@/shared/guards/reserved-word.guard';
 import { SlugGuard } from '@/shared/guards/slug.guard';
 import { response } from '@/shared/utils/rest-api/response';
@@ -11,7 +12,6 @@ import { UpdateAgencySettingsDto } from '../dto/agency-settings.dto';
 import { IAgencySettingsUseCase } from '../ports/agency-settings.usecase.port';
 
 @Controller(EVisaRoutes.PROVIDER_AGENCY)
-@UseGuards(JwtAuthGuard, SlugGuard, ReservedWordGuard)
 export class AgencySettingsController {
   constructor(
     @Inject('IAgencySettingsUseCase')
@@ -19,21 +19,44 @@ export class AgencySettingsController {
   ) {}
 
   @Get('check-slug')
+  @UseGuards(JwtAuthGuard, SlugGuard, ReservedWordGuard)
   async checkSlug(@Query('slug') slug: string) {
     return this.useCase.checkSlugAvailability(slug);
   }
   
   @Get('validate')
-  async validateSession(@UserContext() ctx: IUserContext) {
-    return this.useCase.validateSession(ctx.id);
+  @UseGuards(ApiKeyGuard)
+  async validate(
+    @Query('slug') slug: string,
+    @Res({ passthrough: true }) responseRes: Response,
+  ) {
+    try {
+      const res = await this.useCase.validateSlug(slug);
+
+      if (res.error) {
+        return response[res.error.code || HttpStatus.NOT_FOUND](responseRes, { 
+          message: res.error.message 
+        });
+      }
+
+      return response[HttpStatus.OK](responseRes, {
+        data: res.data,
+      });
+    } catch (error) {
+      return response[HttpStatus.INTERNAL_SERVER_ERROR](responseRes, {
+        message: error instanceof Error ? error.message : 'Internal server error',
+      });
+    }
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, SlugGuard, ReservedWordGuard)
   async getAgency(@UserContext() ctx: IUserContext) {
     return this.useCase.getAgencyData(ctx.id);
   }
 
   @Patch()
+  @UseGuards(JwtAuthGuard, SlugGuard, ReservedWordGuard)
   async updateSettings(
     @UserContext() ctx: IUserContext,
     @Body() dto: UpdateAgencySettingsDto,

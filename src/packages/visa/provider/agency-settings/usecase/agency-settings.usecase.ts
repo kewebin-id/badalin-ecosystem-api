@@ -208,4 +208,27 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
       return { data: { valid: false } };
     }
   }
+
+  async validateSlug(slug: string): Promise<IUsecaseResponse<{ name: string }>> {
+    try {
+      const agency = await this.repository.findBySlug(slug);
+      if (!agency) {
+        return {
+          error: {
+            message: 'Agency not found',
+            code: HttpStatus.NOT_FOUND,
+          },
+        };
+      }
+
+      return { data: { name: agency.name } };
+    } catch (error) {
+      return {
+        error: {
+          message: error instanceof Error ? error.message : 'Failed to validate slug',
+          code: HttpStatus.INTERNAL_SERVER_ERROR,
+        },
+      };
+    }
+  }
 }
