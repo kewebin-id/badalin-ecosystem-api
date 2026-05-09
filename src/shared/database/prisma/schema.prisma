@@ -137,6 +137,7 @@ model Pilgrim {
   photoUrl        String?          @map("photo_url")
   ktpUrl          String           @map("ktp_url")
   passportUrl     String           @map("passport_url")
+  visaUrl         String?          @map("visa_url")
   userId          String?          @unique @map("user_id")
   user            User?            @relation("UserSelf", fields: [userId], references: [id])
   agency          Agency           @relation(fields: [agencySlug], references: [slug])

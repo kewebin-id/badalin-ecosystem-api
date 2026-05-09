@@ -367,14 +367,31 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       issuedAt: new Date(),
     };
 
-    const updated = await this.db.visaSubmission.update({
+    await this.db.$transaction(async (tx) => {
+      await tx.visaSubmission.update({
+        where: { id },
+        data: {
+          reviewStatus: 'ISSUED',
+          status: 'ISSUED',
+          resultSnapshot: updatedSnapshot as unknown as Prisma.InputJsonValue,
+          updatedBy: ctx.id,
+        },
+      });
+
+      // Update each pilgrim with their specific visa URL
+      for (const [memberId, url] of Object.entries(visaUrls)) {
+        await tx.pilgrim.update({
+          where: { id: memberId },
+          data: {
+            visaUrl: url,
+            updatedBy: ctx.id,
+          },
+        });
+      }
+    });
+
+    const updated = await this.db.visaSubmission.findUnique({
       where: { id },
-      data: {
-        reviewStatus: 'ISSUED',
-        status: 'ISSUED',
-        resultSnapshot: updatedSnapshot as unknown as Prisma.InputJsonValue,
-        updatedBy: ctx.id,
-      },
       include: {
         members: true,
         flights: true,
