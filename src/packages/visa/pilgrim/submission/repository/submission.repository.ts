@@ -1,7 +1,7 @@
 import { clientDb } from '@/shared/utils/db';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { Injectable } from '@nestjs/common';
-import { FlightType, HotelCity, RoomType, TransportType, VerifyStatus } from '@prisma/client';
+import { FlightType, HotelCity, Prisma, RoomType, TransportType, VerifyStatus } from '@prisma/client';
 import { PaymentProofSnapshot, VisaSubmissionEntity } from '../domain/submission.entity';
 import {
   IManifestsInput,
@@ -65,9 +65,9 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     const { page = 1, limit = 10, search } = params;
     const skip = (page - 1) * limit;
 
-    const where: any = {
-      agencySlug: ctx.agencySlug || undefined,
+    const where: Prisma.VisaSubmissionWhereInput = {
       leaderId: ctx.role === 'PILGRIM' ? ctx.id : undefined,
+      agencySlug: ctx.agencySlug || undefined,
     };
 
     if (search) {
@@ -173,7 +173,11 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
     return this.db.$transaction(async (tx) => {
-      const updateData: any = { ...data };
+      const { members, flights, hotels, transportations, agency, ...scalarData } = data;
+      const updateData: Prisma.VisaSubmissionUpdateInput = {
+        ...(scalarData as Prisma.VisaSubmissionUpdateInput),
+      };
+
       if (pilgrimIds && pilgrimIds.length > 0) {
         updateData.members = { set: pilgrimIds.map((pid: string) => ({ id: pid })) };
       }
@@ -239,7 +243,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     id: string,
     status: VerifyStatus,
     reason: string | null,
-    resultSnapshot: any | null,
+    resultSnapshot: PaymentProofSnapshot | null,
     memberReviews: IMemberReview[] | null,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
@@ -251,7 +255,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     if (!existing) throw new Error('Submission not found');
 
     const mergedSnapshot = {
-      ...(existing?.resultSnapshot as object || {}),
+      ...((existing?.resultSnapshot as object) || {}),
       ...(resultSnapshot || {}),
     };
 

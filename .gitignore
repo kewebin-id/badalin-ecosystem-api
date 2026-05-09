@@ -19,3 +19,7 @@ src/shared/database/seed*
 
 # ocr
 *traineddata*
+
+# test
+scratch_test*
+scratch*

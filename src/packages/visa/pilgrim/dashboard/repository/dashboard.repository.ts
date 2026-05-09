@@ -10,10 +10,13 @@ export class PilgrimDashboardRepository implements IPilgrimDashboardRepository {
     offset: number,
     limit: number,
   ): Promise<{ count: number; rows: SubmissionHistory[] }> => {
-    const where = {
+    const where: any = {
       leaderId,
-      agencySlug: agencySlug,
     };
+
+    if (agencySlug) {
+      where.agencySlug = agencySlug;
+    }
 
     const [count, rows] = await Promise.all([
       this.db.visaSubmission.count({ where }),
