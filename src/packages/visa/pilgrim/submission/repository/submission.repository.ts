@@ -337,4 +337,49 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
 
     return submission as unknown as VisaSubmissionEntity;
   }
+
+  async submitVisas(
+    id: string,
+    visaFiles: Record<string, { name: string; base64: string }[]>,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
+    const submission = await this.db.visaSubmission.findUnique({
+      where: { id },
+    });
+
+    if (!submission) throw new Error('Submission not found');
+
+    const visaUrls: Record<string, string> = {};
+    const { uploadFile } = await import('@/shared/utils/upload.util');
+
+    for (const [memberId, files] of Object.entries(visaFiles)) {
+      if (files && files.length > 0) {
+        const url = await uploadFile(files[0].base64, 'visas', `visa-${id}-${memberId}`);
+        visaUrls[memberId] = url;
+      }
+    }
+
+    const currentSnapshot = (submission.resultSnapshot as any) || {};
+    const updatedSnapshot = {
+      ...currentSnapshot,
+      visaUrls,
+    };
+
+    const updated = await this.db.visaSubmission.update({
+      where: { id },
+      data: {
+        resultSnapshot: updatedSnapshot as any,
+        updatedBy: ctx.id,
+        // Trigger any side effects here if needed
+      },
+      include: {
+        members: true,
+        flights: true,
+        hotels: true,
+        transportations: true,
+      },
+    });
+
+    return updated as unknown as VisaSubmissionEntity;
+  }
 }

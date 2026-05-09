@@ -79,4 +79,13 @@ export class VerificationUseCase implements IVerificationUseCase {
   async findOne(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
     return this.validateOwnership(id, ctx);
   }
+
+  async submitVisas(
+    id: string,
+    visaFiles: Record<string, { name: string; base64: string }[]>,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
+    await this.validateOwnership(id, ctx);
+    return this.repository.submitVisas(id, visaFiles, ctx);
+  }
 }
