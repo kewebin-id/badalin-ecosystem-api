@@ -53,6 +53,7 @@ export class PilgrimEntity {
   photoUrl?: string;
   ktpUrl?: string;
   passportUrl?: string;
+  visaUrl?: string | null;
 }
 
 export interface PaymentProofSnapshot {

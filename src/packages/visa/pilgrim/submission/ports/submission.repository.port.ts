@@ -84,4 +84,9 @@ export interface IVisaSubmissionRepository {
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity>;
   uploadProof(id: string, proofUrl: string, ocrData: PaymentProofSnapshot | null, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  submitVisas(
+    id: string,
+    visaFiles: Record<string, { name: string; base64: string }[]>,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity>;
 }

@@ -63,4 +63,19 @@ export class VerificationController {
       data: result,
     };
   }
+
+  @Patch('submissions/:id/submit-visas')
+  @UseGuards(AgencyStatusGuard)
+  async submitVisas(
+    @Param('id') id: string,
+    @Body() visaFiles: Record<string, { name: string; base64: string }[]>,
+    @UserContext() ctx: IUserContext,
+  ) {
+    const result = await this.useCase.submitVisas(id, visaFiles, ctx);
+    return {
+      code: HttpStatus.OK,
+      message: 'Visas submitted successfully',
+      data: result,
+    };
+  }
 }
