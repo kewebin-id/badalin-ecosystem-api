@@ -7,7 +7,7 @@ import { ReservedWordGuard } from '@/shared/guards/reserved-word.guard';
 import { SlugGuard } from '@/shared/guards/slug.guard';
 import { response } from '@/shared/utils/rest-api/response';
 import { IUserContext } from '@/shared/utils/rest-api/types';
-import { Body, Controller, Get, HttpStatus, Inject, Patch, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Inject, Param, Patch, Query, Res, UseGuards } from '@nestjs/common';
 import { UpdateAgencySettingsDto } from '../dto/agency-settings.dto';
 import { IAgencySettingsUseCase } from '../ports/agency-settings.usecase.port';
 
@@ -27,7 +27,7 @@ export class AgencySettingsController {
   @Get('validate')
   @UseGuards(ApiKeyGuard)
   async validate(
-    @Query('slug') slug: string,
+    @Param('slug') slug: string,
     @Res({ passthrough: true }) responseRes: Response,
   ) {
     try {
