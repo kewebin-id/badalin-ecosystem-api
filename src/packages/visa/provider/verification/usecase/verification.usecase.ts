@@ -5,6 +5,7 @@ import { IVerificationUseCase } from '../ports/verification.usecase.port';
 import { IVisaSubmissionRepository } from '@/packages/visa/pilgrim/submission/ports/submission.repository.port';
 import { VisaSubmissionEntity } from '@/packages/visa/pilgrim/submission/domain/submission.entity';
 import { ReviewSubmissionDto } from '../dto/verification.dto';
+import { uploadFile } from '@/shared/utils/upload.util';
 
 @Injectable()
 export class VerificationUseCase implements IVerificationUseCase {
@@ -87,7 +88,6 @@ export class VerificationUseCase implements IVerificationUseCase {
   ): Promise<Record<string, string>> {
     await this.validateOwnership(id, ctx);
 
-    const { uploadFile } = await import('@/shared/utils/upload.util');
     const visaUrls: Record<string, string> = {};
 
     // Parallel uploads for better performance
@@ -95,11 +95,15 @@ export class VerificationUseCase implements IVerificationUseCase {
       Object.entries(visaFiles).map(async ([memberId, files]) => {
         if (files && files.length > 0 && files[0].base64) {
           try {
-            const url = await uploadFile(files[0].base64, 'visas', `visa-${id}-${memberId}`);
+            // Using default bucket 'jamaah-docs' to ensure it exists
+            const url = await uploadFile(files[0].base64, 'jamaah-docs', `visa-${id}-${memberId}`);
             visaUrls[memberId] = url;
-          } catch (uploadError) {
-            console.error(`[UploadVisas] Failed to upload for member ${memberId}:`, uploadError);
-            throw new HttpException(`Failed to upload visa for member ${memberId}`, HttpStatus.INTERNAL_SERVER_ERROR);
+          } catch (uploadError: any) {
+            console.error(`[UploadVisas] Failed to upload for member ${memberId}:`, uploadError?.message || uploadError);
+            throw new HttpException(
+              `Failed to upload visa for member ${memberId}: ${uploadError?.message || 'Unknown error'}`, 
+              HttpStatus.INTERNAL_SERVER_ERROR
+            );
           }
         }
       }),
