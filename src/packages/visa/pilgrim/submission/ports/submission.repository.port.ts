@@ -1,12 +1,13 @@
 import { IUserContext } from '@/shared/utils/rest-api/types';
+import { FlightType, HotelCity, RoomType, TransportType, VerifyStatus } from '@prisma/client';
 import {
   FlightManifestEntity,
   HotelManifestEntity,
+  ISubmissionResultSnapshot,
   PaymentProofSnapshot,
   TransportationManifestEntity,
   VisaSubmissionEntity,
 } from '../domain/submission.entity';
-import { FlightType, HotelCity, RoomType, TransportType, VerifyStatus } from '@prisma/client';
 
 export interface IVisaSubmissionCreateInput {
   agencySlug: string;
@@ -79,14 +80,15 @@ export interface IVisaSubmissionRepository {
     id: string,
     status: VerifyStatus,
     reason: string | null,
-    resultSnapshot: any | null,
+    resultSnapshot: ISubmissionResultSnapshot | null,
     memberReviews: IMemberReview[] | null,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity>;
-  uploadProof(id: string, proofUrl: string, ocrData: PaymentProofSnapshot | null, ctx: IUserContext): Promise<VisaSubmissionEntity>;
-  submitVisas(
+  uploadProof(
     id: string,
-    visaUrls: Record<string, string>,
+    proofUrl: string,
+    ocrData: PaymentProofSnapshot | null,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity>;
+  submitVisas(id: string, visaUrls: Record<string, string>, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }

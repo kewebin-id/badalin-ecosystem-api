@@ -243,7 +243,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     id: string,
     status: VerifyStatus,
     reason: string | null,
-    resultSnapshot: PaymentProofSnapshot | null,
+    resultSnapshot: ISubmissionResultSnapshot | null,
     memberReviews: IMemberReview[] | null,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
