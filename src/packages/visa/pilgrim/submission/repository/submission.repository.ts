@@ -15,7 +15,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
   private readonly db = clientDb;
 
   async findById(id: string): Promise<VisaSubmissionEntity | null> {
-    const submission = await this.db.visaSubmission.findUnique({
+    const result = await this.db.visaSubmission.findUnique({
       where: { id },
       include: {
         flights: true,
@@ -27,6 +27,11 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
             bankAccountName: true,
             bankAccountNumber: true,
             status: true,
+            users: {
+              where: { role: 'PROVIDER', phoneNumber: { not: null } },
+              select: { phoneNumber: true },
+              take: 1,
+            },
           },
         },
         members: {
@@ -40,9 +45,12 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
             gender: true,
             birthDate: true,
             maritalStatus: true,
+            isEligible: true,
+            rejectionReason: true,
             photoUrl: true,
             ktpUrl: true,
             passportUrl: true,
+            visaUrl: true,
           },
         },
         leader: {
@@ -55,7 +63,20 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       },
     });
 
-    return submission as unknown as VisaSubmissionEntity;
+    if (!result) return null;
+
+    // Flatten agency phone number from the first provider user
+    const agencyPhoneNumber = result.agency?.users?.[0]?.phoneNumber || null;
+
+    return {
+      ...result,
+      agency: result.agency
+        ? {
+            ...result.agency,
+            phoneNumber: agencyPhoneNumber,
+          }
+        : null,
+    } as unknown as VisaSubmissionEntity;
   }
 
   async findAll(
@@ -290,7 +311,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
         }
       }
 
-      const submission = await tx.visaSubmission.update({
+      await tx.visaSubmission.update({
         where: { id },
         data: {
           reviewStatus: status,
@@ -304,15 +325,11 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
           refundDeadline,
           updatedBy: ctx.id,
         },
-        include: {
-          members: true,
-          flights: true,
-          hotels: true,
-          transportations: true,
-        },
       });
 
-      return submission as unknown as VisaSubmissionEntity;
+      const result = await this.findById(id);
+      if (!result) throw new Error('Submission not found after review update');
+      return result;
     });
   }
 
@@ -322,7 +339,7 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     ocrData: PaymentProofSnapshot | null,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
-    const submission = await this.db.visaSubmission.update({
+    await this.db.visaSubmission.update({
       where: { id },
       data: {
         proofOfPayment: proofUrl,
@@ -330,13 +347,11 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
         resultSnapshot: ocrData || undefined,
         updatedBy: ctx.id,
       },
-      include: {
-        members: true,
-        agency: true,
-      },
     });
 
-    return submission as unknown as VisaSubmissionEntity;
+    const result = await this.findById(id);
+    if (!result) throw new Error('Submission not found after proof upload');
+    return result;
   }
 
   async submitVisas(

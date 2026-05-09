@@ -102,5 +102,6 @@ export class VisaSubmissionEntity {
     bankName: string | null;
     bankAccountName: string | null;
     bankAccountNumber: string | null;
+    phoneNumber: string | null;
   };
 }
