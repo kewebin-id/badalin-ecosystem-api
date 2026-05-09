@@ -43,7 +43,7 @@ export class PilgrimAuthController {
   @Post(EAuthRoutes.REGISTER)
   async register(@Body() dto: PilgrimRegisterDto, @Res() res: Response) {
     try {
-      const agencySlug = res.req.cookies?.['agency_slug'];
+      const agencySlug = res.req.cookies?.['agency_id'] || res.req.cookies?.['agency_slug'];
       const responseData = await this.authUseCase.register(dto, agencySlug);
       if (responseData.error) {
         return response[responseData.error.code || HttpStatus.INTERNAL_SERVER_ERROR](res, {
