@@ -1,6 +1,6 @@
 import { clientDb } from '@/shared/utils/db';
 import { Injectable } from '@nestjs/common';
-import { Agency } from '@prisma/client';
+import { Agency, Prisma } from '@prisma/client';
 import { IAgencySettingsRepository } from '../ports/agency-settings.repository.port';
 
 @Injectable()
@@ -31,13 +31,14 @@ export class AgencySettingsRepository implements IAgencySettingsRepository {
     });
   }
 
-  async update(id: string, data: Partial<Agency>, oldSlug?: string): Promise<Agency> {
+  async update(id: string, data: Prisma.AgencyUpdateInput, oldSlug?: string): Promise<Agency> {
     const { slug, ...otherData } = data;
+    const slugValue = typeof slug === 'string' ? slug : undefined;
 
-    if (!slug || slug === oldSlug) {
+    if (!slugValue || slugValue === oldSlug) {
       return this.prisma.agency.update({
         where: { id },
-        data: otherData,
+        data: otherData as Prisma.AgencyUpdateInput,
       });
     }
 
@@ -46,7 +47,7 @@ export class AgencySettingsRepository implements IAgencySettingsRepository {
         where: { id },
         data: {
           ...otherData,
-          slug,
+          slug: slugValue,
           lastSlugUpdate: new Date(),
         },
       });
@@ -54,17 +55,17 @@ export class AgencySettingsRepository implements IAgencySettingsRepository {
       if (oldSlug) {
         await tx.user.updateMany({
           where: { agencySlug: oldSlug },
-          data: { agencySlug: slug },
+          data: { agencySlug: slugValue },
         });
 
         await tx.pilgrim.updateMany({
           where: { agencySlug: oldSlug },
-          data: { agencySlug: slug },
+          data: { agencySlug: slugValue },
         });
 
         await tx.visaSubmission.updateMany({
           where: { agencySlug: oldSlug },
-          data: { agencySlug: slug },
+          data: { agencySlug: slugValue },
         });
       }
 

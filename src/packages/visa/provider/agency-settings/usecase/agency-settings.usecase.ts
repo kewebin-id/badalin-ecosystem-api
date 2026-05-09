@@ -6,7 +6,7 @@ import { Agency, Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 import { UpdateAgencySettingsDto } from '../dto/agency-settings.dto';
 import { IAgencySettingsRepository } from '../ports/agency-settings.repository.port';
-import { IAgencySettingsUseCase } from '../ports/agency-settings.usecase.port';
+import { IAgencyResponse, IAgencySettingsUseCase } from '../ports/agency-settings.usecase.port';
 
 @Injectable()
 export class AgencySettingsUseCase implements IAgencySettingsUseCase {
@@ -18,7 +18,7 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
     private readonly jwtService: JwtService,
   ) {}
 
-  async getAgencyData(providerId: string): Promise<IUsecaseResponse<Agency>> {
+  async getAgencyData(providerId: string): Promise<IUsecaseResponse<IAgencyResponse>> {
     try {
       const user = await this.authRepository.findByIdentifier(providerId);
       if (!user || !user.agencySlug) {
@@ -44,7 +44,7 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
         data: {
           ...agency,
           isSlugSetup: !agency.slug.startsWith('temp-'),
-        } as any,
+        },
       };
     } catch (error) {
       return {
@@ -73,7 +73,7 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
   async updateAgencySettings(
     providerId: string,
     dto: UpdateAgencySettingsDto,
-  ): Promise<IUsecaseResponse<Agency & { newToken?: string }>> {
+  ): Promise<IUsecaseResponse<IAgencyResponse>> {
     try {
       const user = await this.authRepository.findByIdentifier(providerId);
       if (!user) {
@@ -150,7 +150,17 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
         }
       }
 
-      const updatedAgency = await this.repository.update(agency.id, dto as any, agency.slug);
+      const updateData: Prisma.AgencyUpdateInput = {
+        name: dto.name,
+        slug: dto.slug,
+        visaPrice: dto.visaPrice ? new Prisma.Decimal(dto.visaPrice) : undefined,
+        bankName: dto.bankName,
+        bankAccountName: dto.bankAccountName,
+        bankAccountNumber: dto.bankAccountNumber,
+        updatedBy: providerId,
+      };
+
+      const updatedAgency = await this.repository.update(agency.id, updateData, agency.slug);
 
       let newToken: string | undefined;
       if (dto.slug && dto.slug !== agency.slug) {
@@ -167,6 +177,7 @@ export class AgencySettingsUseCase implements IAgencySettingsUseCase {
       return {
         data: {
           ...updatedAgency,
+          isSlugSetup: !updatedAgency.slug.startsWith('temp-'),
           newToken,
         },
       };
