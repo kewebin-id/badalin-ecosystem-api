@@ -1,6 +1,7 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ISubmissionResultSnapshot } from '@/packages/visa/pilgrim/submission/domain/submission.entity';
 import { VerifyStatus } from '@prisma/client';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class MemberReviewDto {
   @IsString()
@@ -25,7 +26,7 @@ export class ReviewSubmissionDto {
   rejectionReason?: string;
 
   @IsOptional()
-  resultSnapshot?: any;
+  resultSnapshot?: ISubmissionResultSnapshot;
 
   @IsOptional()
   @IsArray()

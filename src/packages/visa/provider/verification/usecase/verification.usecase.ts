@@ -1,11 +1,11 @@
+import { VisaSubmissionEntity } from '@/packages/visa/pilgrim/submission/domain/submission.entity';
+import { IVisaSubmissionRepository } from '@/packages/visa/pilgrim/submission/ports/submission.repository.port';
+import { IUserContext } from '@/shared/utils/rest-api/types';
+import { uploadFile } from '@/shared/utils/upload.util';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { PaymentStatus, VerifyStatus } from '@prisma/client';
-import { IUserContext } from '@/shared/utils/rest-api/types';
-import { IVerificationUseCase } from '../ports/verification.usecase.port';
-import { IVisaSubmissionRepository } from '@/packages/visa/pilgrim/submission/ports/submission.repository.port';
-import { VisaSubmissionEntity } from '@/packages/visa/pilgrim/submission/domain/submission.entity';
 import { ReviewSubmissionDto } from '../dto/verification.dto';
-import { uploadFile } from '@/shared/utils/upload.util';
+import { IVerificationUseCase } from '../ports/verification.usecase.port';
 
 @Injectable()
 export class VerificationUseCase implements IVerificationUseCase {
@@ -30,8 +30,8 @@ export class VerificationUseCase implements IVerificationUseCase {
   async findAll(
     params: { page?: number; limit?: number; search?: string },
     ctx: IUserContext,
-  ): Promise<{ 
-    items: VisaSubmissionEntity[]; 
+  ): Promise<{
+    items: VisaSubmissionEntity[];
     totalItems: number;
     totalPages: number;
     currentPage: number;
@@ -39,7 +39,7 @@ export class VerificationUseCase implements IVerificationUseCase {
     const page = params.page || 1;
     const limit = params.limit || 10;
     const { data: items, total } = await this.repository.findAll({ ...params, page, limit }, ctx);
-    
+
     return {
       items,
       totalItems: total,
@@ -51,11 +51,16 @@ export class VerificationUseCase implements IVerificationUseCase {
   async verifyPayment(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
     await this.validateOwnership(id, ctx);
 
-    const submission = await this.repository.update(id, {
-      paymentStatus: PaymentStatus.COMPLETED,
-      reviewStatus: VerifyStatus.IN_REVIEW,
-      status: VerifyStatus.IN_REVIEW,
-    } as any, [], ctx);
+    const submission = await this.repository.update(
+      id,
+      {
+        paymentStatus: PaymentStatus.COMPLETED,
+        reviewStatus: VerifyStatus.IN_REVIEW,
+        status: VerifyStatus.IN_REVIEW,
+      } as Partial<VisaSubmissionEntity>,
+      [],
+      ctx,
+    );
 
     return submission;
   }
@@ -90,19 +95,21 @@ export class VerificationUseCase implements IVerificationUseCase {
 
     const visaUrls: Record<string, string> = {};
 
-    // Parallel uploads for better performance
     await Promise.all(
       Object.entries(visaFiles).map(async ([memberId, files]) => {
         if (files && files.length > 0 && files[0].base64) {
           try {
-            // Using default bucket 'jamaah-docs' to ensure it exists
-            const url = await uploadFile(files[0].base64, 'jamaah-docs', `visa-${id}-${memberId}`);
+            const bucket = process.env.SUPABASE_BUCKET || 'jamaah-docs';
+            const url = await uploadFile(files[0].base64, bucket, `visa-${id}-${memberId}`);
             visaUrls[memberId] = url;
           } catch (uploadError: any) {
-            console.error(`[UploadVisas] Failed to upload for member ${memberId}:`, uploadError?.message || uploadError);
+            console.error(
+              `[UploadVisas] Failed to upload for member ${memberId}:`,
+              uploadError?.message || uploadError,
+            );
             throw new HttpException(
-              `Failed to upload visa for member ${memberId}: ${uploadError?.message || 'Unknown error'}`, 
-              HttpStatus.INTERNAL_SERVER_ERROR
+              `Failed to upload visa for member ${memberId}: ${uploadError?.message || 'Unknown error'}`,
+              HttpStatus.INTERNAL_SERVER_ERROR,
             );
           }
         }
@@ -112,19 +119,11 @@ export class VerificationUseCase implements IVerificationUseCase {
     return visaUrls;
   }
 
-  async submitVisas(
-    id: string,
-    visaUrls: Record<string, string>,
-    ctx: IUserContext,
-  ): Promise<VisaSubmissionEntity> {
+  async submitVisas(id: string, visaUrls: Record<string, string>, ctx: IUserContext): Promise<VisaSubmissionEntity> {
     const submission = await this.validateOwnership(id, ctx);
 
-    // Business Validation: Payment must be completed
     if (submission.paymentStatus !== PaymentStatus.COMPLETED) {
-      throw new HttpException(
-        'Cannot issue visas: Payment has not been completed',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Cannot issue visas: Payment has not been completed', HttpStatus.BAD_REQUEST);
     }
 
     return this.repository.submitVisas(id, visaUrls, ctx);
