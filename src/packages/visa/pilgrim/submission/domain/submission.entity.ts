@@ -71,19 +71,28 @@ export interface PaymentProofSnapshot {
   [key: string]: any;
 }
 
+export interface ISubmissionResultSnapshot {
+  memberStatuses?: Record<string, { valid: boolean; reason?: string }>;
+  visaUrls?: Record<string, string>;
+  isIssued?: boolean;
+  issuedAt?: Date;
+  paymentProof?: PaymentProofSnapshot;
+  [key: string]: any;
+}
+
 export class VisaSubmissionEntity {
   id: string;
   leaderId: string;
   agencySlug: string;
   status: VerifyStatus;
-  verifyStatus: VerifyStatus;
+  reviewStatus: VerifyStatus;
   paymentStatus: PaymentStatus;
   totalAmount: Decimal;
   refundAmount: Decimal;
   refundStatus: string | null;
   refundDeadline: Date | null;
   rejectionReason: string | null;
-  resultSnapshot: PaymentProofSnapshot | null;
+  resultSnapshot: ISubmissionResultSnapshot | null;
 
   flights?: FlightManifestEntity[];
   hotels?: HotelManifestEntity[];

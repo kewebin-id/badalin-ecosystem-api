@@ -21,13 +21,13 @@ export class ProviderDashboardRepository implements IProviderDashboardRepository
       this.db.visaSubmission.count({
         where: {
           agencySlug,
-          verifyStatus: VerifyStatus.IN_REVIEW,
+          reviewStatus: VerifyStatus.IN_REVIEW,
         },
       }),
       this.db.visaSubmission.count({
         where: {
           agencySlug,
-          verifyStatus: VerifyStatus.VERIFIED,
+          status: VerifyStatus.ISSUED,
         },
       }),
     ]);
@@ -53,9 +53,9 @@ export class ProviderDashboardRepository implements IProviderDashboardRepository
     return activities.map((a) => ({
       id: a.id,
       description: a.leader.fullName || 'Unknown',
-      status: a.verifyStatus,
+      status: a.reviewStatus,
       timestamp: a.updatedAt,
-      type: this.getActivityType(a.verifyStatus as any),
+      type: this.getActivityType(a.reviewStatus),
     }));
   }
 

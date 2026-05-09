@@ -52,7 +52,7 @@ export class VerificationUseCase implements IVerificationUseCase {
 
     const submission = await this.repository.update(id, {
       paymentStatus: PaymentStatus.COMPLETED,
-      verifyStatus: VerifyStatus.IN_REVIEW,
+      reviewStatus: VerifyStatus.IN_REVIEW,
       status: VerifyStatus.IN_REVIEW,
     } as any, [], ctx);
 
