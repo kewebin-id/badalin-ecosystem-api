@@ -129,7 +129,7 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
       if (flightDate !== checkInDate) {
         errors.push({
           path: 'departureFlightDate',
-          message: `BR-LOG-001: Departure flight date (${flightDate}) must match the first hotel check-in date (${checkInDate})`,
+          message: `BR-LOG-001: Tanggal keberangkatan pesawat (ETD) ${flightDate} harus sama dengan tanggal check-in hotel pertama ${checkInDate}`,
         });
       }
     }
@@ -173,7 +173,7 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
       if (flightDate !== checkOutDate) {
         errors.push({
           path: 'returnFlightDate',
-          message: `BR-LOG-004: Return flight date (${flightDate}) must match the latest hotel check-out date (${checkOutDate})`,
+          message: `BR-LOG-004: Tanggal Check-out hotel terakhir ${checkOutDate} harus sama dengan tanggal keberangkatan pesawat (ETD) ${flightDate}`,
         });
       }
     }
