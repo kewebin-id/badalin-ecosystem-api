@@ -2,13 +2,17 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import * as path from 'path';
 dotenv.config({ path: path.join(process.cwd(), '.env') });
+process.env.TZ = 'Asia/Jakarta';
 
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { json, urlencoded } from 'express';
 import { AppModule } from './modules/app.module';
-import { AllExceptionsFilter } from './shared/utils';
+import { AllExceptionsFilter, dateUtil } from './shared/utils';
+
+// Ensure global timezone is initialized
+dateUtil();
 
 const bootstrap = async () => {
   const mode = process.env.MODE;
