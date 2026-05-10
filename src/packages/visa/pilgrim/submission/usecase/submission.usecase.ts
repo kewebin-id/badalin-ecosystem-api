@@ -12,6 +12,7 @@ import {
 } from '../ports/submission.usecase.port';
 
 import { IUploadUseCase } from '@/packages/upload/ports/i.usecase';
+import { dateUtil } from '@/shared/utils';
 
 @Injectable()
 export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
@@ -113,26 +114,68 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
     const warnings: string[] = [];
 
     const flights = data.flights || [];
-    const hotels = data.hotels || [];
+    const hotels = [...(data.hotels || [])].sort((a, b) => 
+      new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime()
+    );
 
-    const returnFlight = flights.find((f) => f.type === 'RETURN');
-    const returnDate = returnFlight?.flightDate ? new Date(returnFlight.flightDate).toISOString().split('T')[0] : null;
+    // BR-LOG-001: Departure Flight vs First Hotel Check-in
+    const departureFlight = flights.find((f) => f.type === 'DEPARTURE');
+    const firstHotel = hotels[0];
+    
+    if (departureFlight && firstHotel) {
+      const flightDate = dateUtil(departureFlight.flightDate).format('YYYY-MM-DD');
+      const checkInDate = dateUtil(firstHotel.checkIn).format('YYYY-MM-DD');
+      
+      if (flightDate !== checkInDate) {
+        errors.push({
+          path: 'departureFlightDate',
+          message: `BR-LOG-001: Departure flight date (${flightDate}) must match the first hotel check-in date (${checkInDate})`,
+        });
+      }
+    }
 
-    let latestCheckout: string | null = null;
-    hotels.forEach((h) => {
-      if (h.checkOut) {
-        const checkoutDate = new Date(h.checkOut).toISOString().split('T')[0];
-        if (!latestCheckout || checkoutDate > latestCheckout) {
-          latestCheckout = checkoutDate;
+    // BR-LOG-002 & BR-LOG-003: Hotel Stay Validations
+    hotels.forEach((hotel, index) => {
+      const checkIn = dateUtil(hotel.checkIn);
+      const checkOut = dateUtil(hotel.checkOut);
+
+      // BR-LOG-002: Check-in < Check-out
+      if (!checkOut.isAfter(checkIn)) {
+        errors.push({
+          path: `hotels.${index}.checkOut`,
+          message: `BR-LOG-002: Check-out date must be after check-in date for ${hotel.city}`,
+        });
+      }
+
+      // BR-LOG-003: Zero Gap between hotels
+      if (index > 0) {
+        const prevHotel = hotels[index - 1];
+        const prevCheckOut = dateUtil(prevHotel.checkOut).format('YYYY-MM-DD');
+        const currentCheckIn = checkIn.format('YYYY-MM-DD');
+        
+        if (prevCheckOut !== currentCheckIn) {
+          errors.push({
+            path: `hotels.${index}.checkIn`,
+            message: `BR-LOG-003: Zero gap required. Check-in for ${hotel.city} (${currentCheckIn}) must match check-out from ${prevHotel.city} (${prevCheckOut})`,
+          });
         }
       }
     });
 
-    if (returnDate && latestCheckout && returnDate !== latestCheckout) {
-      errors.push({
-        path: 'returnFlightDate',
-        message: `BR-LOG-004: Return flight date (${returnDate}) must match the latest hotel check-out date (${latestCheckout})`,
-      });
+    // BR-LOG-004: Latest Hotel Check-out vs Return Flight
+    const returnFlight = flights.find((f) => f.type === 'RETURN');
+    const lastHotel = hotels[hotels.length - 1];
+
+    if (returnFlight && lastHotel) {
+      const flightDate = dateUtil(returnFlight.flightDate).format('YYYY-MM-DD');
+      const checkOutDate = dateUtil(lastHotel.checkOut).format('YYYY-MM-DD');
+
+      if (flightDate !== checkOutDate) {
+        errors.push({
+          path: 'returnFlightDate',
+          message: `BR-LOG-004: Return flight date (${flightDate}) must match the latest hotel check-out date (${checkOutDate})`,
+        });
+      }
     }
 
     return {

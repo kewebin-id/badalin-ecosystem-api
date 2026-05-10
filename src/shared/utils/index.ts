@@ -5,3 +5,4 @@ export * from './mailer';
 export * from './rest-api/rest-api';
 export * from './rest-api/types';
 export * from './serialize';
+export * from './date.util';
