@@ -17,17 +17,18 @@ import { dateUtil } from '@/shared/utils';
 export function validateLogistics(data: ISubmissionRequest): ISubmissionError[] {
   const errors: ISubmissionError[] = [];
   const flights = data.flights || [];
+  
+  // Sort hotels by check-in date using standardized Jakarta time
   const hotels = [...(data.hotels || [])].sort((a, b) => 
-    new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime()
+    dateUtil(a.checkIn).valueOf() - dateUtil(b.checkIn).valueOf()
   );
 
-  // BR-LOG-001: Departure Flight vs First Hotel Check-in
-  // Departure requirement: First Check-in == Flight ETA (Arrival in Saudi)
+  // 1. Departure Validation (Flight ETA === First Hotel Check-in)
   const departureFlight = flights.find((f) => f.type === 'DEPARTURE');
   const firstHotel = hotels[0];
   
   if (departureFlight && firstHotel) {
-    const flightArrivalDate = dateUtil(departureFlight.flightDate).format('YYYY-MM-DD');
+    const flightArrivalDate = dateUtil(departureFlight.eta).format('YYYY-MM-DD');
     const checkInDate = dateUtil(firstHotel.checkIn).format('YYYY-MM-DD');
     
     if (flightArrivalDate !== checkInDate) {
@@ -38,47 +39,47 @@ export function validateLogistics(data: ISubmissionRequest): ISubmissionError[] 
     }
   }
 
-  // BR-LOG-002 & BR-LOG-003: Hotel Stay Validations
+  // 2. Hotel Chain Validation (Hotel N Check-out === Hotel N+1 Check-in)
   hotels.forEach((hotel, index) => {
     const checkIn = dateUtil(hotel.checkIn);
     const checkOut = dateUtil(hotel.checkOut);
+    const checkInStr = checkIn.format('YYYY-MM-DD');
+    const checkOutStr = checkOut.format('YYYY-MM-DD');
 
-    // BR-LOG-002: Check-in < Check-out
+    // Basic validity: Check-in < Check-out
     if (!checkOut.isAfter(checkIn)) {
       errors.push({
         path: `hotels.${index}.checkOut`,
-        message: `BR-LOG-002: Check-out date must be after check-in date for ${hotel.city}`,
+        message: `BR-LOG-002: Tanggal check-out (${checkOutStr}) harus setelah tanggal check-in (${checkInStr}) untuk hotel di ${hotel.city}`,
       });
     }
 
-    // BR-LOG-003: Zero Gap between hotels
+    // Continuity check (Zero Gap)
     if (index > 0) {
       const prevHotel = hotels[index - 1];
-      const prevCheckOut = dateUtil(prevHotel.checkOut).format('YYYY-MM-DD');
-      const currentCheckIn = checkIn.format('YYYY-MM-DD');
+      const prevCheckOutStr = dateUtil(prevHotel.checkOut).format('YYYY-MM-DD');
       
-      if (prevCheckOut !== currentCheckIn) {
+      if (prevCheckOutStr !== checkInStr) {
         errors.push({
           path: `hotels.${index}.checkIn`,
-          message: `BR-LOG-003: Zero gap required. Check-in for ${hotel.city} (${currentCheckIn}) must match check-out from ${prevHotel.city} (${prevCheckOut})`,
+          message: `BR-LOG-003: Zero Gap required. Tanggal check-in di ${hotel.city} (${checkInStr}) harus sama dengan tanggal check-out hotel sebelumnya di ${prevHotel.city} (${prevCheckOutStr})`,
         });
       }
     }
   });
 
-  // BR-LOG-004: Latest Hotel Check-out vs Return Flight
-  // Return requirement: Last Check-out == Flight ETD (Departure from Saudi)
+  // 3. Return Validation (Last Hotel Check-out === Flight ETD)
   const returnFlight = flights.find((f) => f.type === 'RETURN');
   const lastHotel = hotels[hotels.length - 1];
 
   if (returnFlight && lastHotel) {
-    const flightDepartureDate = dateUtil(returnFlight.flightDate).format('YYYY-MM-DD');
+    const flightDepartureDate = dateUtil(returnFlight.etd).format('YYYY-MM-DD');
     const checkOutDate = dateUtil(lastHotel.checkOut).format('YYYY-MM-DD');
 
     if (flightDepartureDate !== checkOutDate) {
       errors.push({
         path: 'returnFlightDate',
-        message: `BR-LOG-004: Tanggal Check-out hotel terakhir ${checkOutDate} harus sama dengan tanggal keberangkatan pesawat (ETD) ${flightDepartureDate}`,
+        message: `BR-LOG-004: Tanggal check-out hotel terakhir ${checkOutDate} harus sama dengan tanggal keberangkatan pesawat (ETD) ${flightDepartureDate}`,
       });
     }
   }
