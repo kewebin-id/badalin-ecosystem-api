@@ -1,4 +1,11 @@
-import { IsDecimal, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateAgencySettingsDto {
   @IsString()
@@ -13,8 +20,9 @@ export class UpdateAgencySettingsDto {
   @MaxLength(50)
   slug?: string;
 
-  @IsDecimal()
+  @IsNumber()
   @IsOptional()
+  @Transform(({ value }) => (value ? Math.abs(parseFloat(value)) : 0))
   visaPrice?: number;
 
   @IsString()
