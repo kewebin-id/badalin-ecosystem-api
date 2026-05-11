@@ -4,9 +4,12 @@ import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { SettleRefundDto } from '../dto/refund.dto';
+import { EVisaRoutes } from '@/shared/constants';
+import { SlugGuard } from '@/shared/guards/slug.guard';
+import { ReservedWordGuard } from '@/shared/guards/reserved-word.guard';
 
-@Controller('provider/refund')
-@UseGuards(JwtAuthGuard)
+@Controller(EVisaRoutes.PROVIDER_REFUND)
+@UseGuards(JwtAuthGuard, SlugGuard, ReservedWordGuard)
 export class RefundController {
   constructor(
     @Inject('IRefundUseCase')
