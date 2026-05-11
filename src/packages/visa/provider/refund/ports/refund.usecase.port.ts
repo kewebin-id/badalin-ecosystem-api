@@ -12,6 +12,11 @@ export interface IRefundListItem {
 }
 
 export interface IRefundUseCase {
-  getRefundList(ctx: IUserContext): Promise<IRefundListItem[]>;
+  getRefundList(
+    ctx: IUserContext,
+    page?: number,
+    limit?: number,
+    search?: string,
+  ): Promise<{ items: IRefundListItem[]; totalItems: number; totalPages: number; currentPage: number }>;
   settleRefund(submissionId: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }
