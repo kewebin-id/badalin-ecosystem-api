@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
 import { IRefundUseCase } from '../ports/refund.usecase.port';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
-import { UserContext } from '@/shared/utils/rest-api/user-context.decorator';
+import { UserContext } from '@/shared/decorators/user-context.decorator';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { SettleRefundDto } from '../dto/refund.dto';
 
