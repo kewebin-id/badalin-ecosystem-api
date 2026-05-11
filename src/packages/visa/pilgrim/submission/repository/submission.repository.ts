@@ -91,6 +91,12 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
       agencySlug: ctx.agencySlug || undefined,
     };
 
+    if (ctx.role === 'PROVIDER') {
+      where.paymentStatus = {
+        in: ['CHECKING', 'COMPLETED'],
+      };
+    }
+
     if (search) {
       where.OR = [
         { id: { contains: search, mode: 'insensitive' } },
