@@ -246,3 +246,70 @@ export const sendInvitationEmail = async (email: string, invitationLink: string,
     return false;
   }
 };
+
+export const sendSubmissionRegistrationEmail = async (email: string) => {
+  try {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      Logger.error('SMTP configuration is missing', 'shared/utils/mailer.ts - sendSubmissionRegistrationEmail');
+      return false;
+    }
+
+    const smtpPort = parseInt(process.env.SMTP_PORT || '465');
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: smtpPort,
+      secure: smtpPort === 465 || process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      connectionTimeout: 10000,
+    });
+
+    const htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; line-height: 1.6;">
+        ${
+          process.env.LOGO
+            ? `
+        <div style="text-align: center; margin-bottom: 30px;">
+          <img src="${process.env.LOGO}" alt="Badalin logo" style="max-width: 250px; height: auto;">
+        </div>
+        `
+            : ''
+        }
+
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #f57d28; margin: 0; font-size: 24px;">Pengajuan Visa Berhasil Disimpan</h1>
+        </div>
+        
+        <div style="background-color: #feedd6; border-radius: 8px; padding: 25px; margin-bottom: 30px; border-left: 4px solid #f57d28;">
+          <p style="margin: 0; color: #3c5a5e; font-size: 16px;">Data awal berhasil disimpan. Silakan login kembali untuk melanjutkan proses Pengajuan Visa.</p>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; text-align: center;">
+          <p style="margin: 5px 0;">This is an automated notification from Badalin Ecosystem.</p>
+          <p style="margin: 5px 0;">&copy; ${new Date().getFullYear()} Badalin</p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"Badalin | Visa Tracker" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: 'Data Awal Pengajuan Berhasil Disimpan - Badalin Ecosystem',
+      html: htmlContent,
+    };
+
+    await transporter.sendMail(mailOptions);
+    Logger.info('Submission registration email sent successfully', `Email: ${email}`);
+
+    return true;
+  } catch (error: unknown) {
+    Logger.error(
+      `Failed to send submission registration email to ${email}`,
+      error instanceof Error ? error.message : 'Unknown error',
+      'shared/utils/mailer.ts - sendSubmissionRegistrationEmail',
+    );
+    return false;
+  }
+};
