@@ -7,6 +7,10 @@ export interface IHistoryResponse {
   destinationDate: string;
   totalAmount: number;
   status: string;
+  airlineName: string;
+  hotelName: string;
+  totalDays: number;
+  memberCount: number;
 }
 
 export interface IPilgrimDashboardUseCase {

@@ -1,8 +1,10 @@
-import { VisaSubmission, FlightManifest, TransportationManifest } from '@prisma/client';
+import { VisaSubmission, FlightManifest, TransportationManifest, HotelManifest, Pilgrim } from '@prisma/client';
 
 export type SubmissionHistory = VisaSubmission & {
   flights: FlightManifest[];
   transportations: TransportationManifest[];
+  hotels: HotelManifest[];
+  members: Pilgrim[];
 };
 
 export interface IPilgrimDashboardRepository {
