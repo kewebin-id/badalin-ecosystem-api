@@ -171,6 +171,7 @@ model VisaSubmission {
   refundAmount    Decimal       @default(0) @map("refund_amount")
   refundStatus    String?       @map("refund_status")
   refundDeadline  DateTime?     @map("refund_deadline")
+  proofOfRefund   String?       @map("refund_proof_url")
 
   rawdahMenTime   String? @map("rawdah_men_time")
   rawdahWomenTime String? @map("rawdah_women_time")

@@ -92,6 +92,7 @@ export class VisaSubmissionEntity {
   refundStatus: string | null;
   refundDeadline: Date | null;
   rejectionReason: string | null;
+  proofOfRefund: string | null;
   resultSnapshot: ISubmissionResultSnapshot | null;
 
   flights?: FlightManifestEntity[];

@@ -13,6 +13,7 @@ import {
   PilgrimModule,
   SubmissionModule,
   ProviderDashboardModule,
+  RefundModule,
 } from './visa';
 
 @Module({
@@ -28,6 +29,7 @@ import {
     DashboardModule,
     ProviderDashboardModule,
     AgencyModule,
+    RefundModule,
     UploadModule,
     ScheduleModule.forRoot(),
   ],
