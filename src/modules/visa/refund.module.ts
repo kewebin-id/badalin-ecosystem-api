@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { RefundController, RefundRepository, RefundUseCase } from '@/packages/visa/provider/refund';
+import { AuthModule } from './auth.module';
 import { UploadModule } from '../upload.module';
 
 @Module({
-  imports: [UploadModule],
+  imports: [UploadModule, AuthModule],
   controllers: [RefundController],
   providers: [
     {
