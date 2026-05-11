@@ -31,14 +31,14 @@ export class PilgrimDashboardUseCase implements IPilgrimDashboardUseCase {
         const firstTransport = sub.transportations?.[0];
 
         return {
-          transaction_id: sub.id,
-          flight_route: firstTransport
+          transactionId: sub.id,
+          flightRoute: firstTransport
             ? `${firstTransport.from || ''} - ${firstTransport.to || ''}`
             : firstFlight?.carrier || '-',
-          destination_date: lastFlight?.etd
+          destinationDate: lastFlight?.etd
             ? lastFlight.etd.toISOString()
             : lastFlight?.flightDate.toISOString() || '-',
-          total_amount: Number(sub.totalAmount),
+          totalAmount: Number(sub.totalAmount),
           status: sub.status,
         };
       });

@@ -2,10 +2,10 @@ import { IUsecaseResponse, IPaginationResponse } from '@/shared/utils/rest-api/t
 import { PaginationDto } from '@/shared/utils/rest-api/pagination';
 
 export interface IHistoryResponse {
-  transaction_id: string;
-  flight_route: string;
-  destination_date: string;
-  total_amount: number;
+  transactionId: string;
+  flightRoute: string;
+  destinationDate: string;
+  totalAmount: number;
   status: string;
 }
 
