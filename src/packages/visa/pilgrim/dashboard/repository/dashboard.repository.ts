@@ -27,6 +27,8 @@ export class PilgrimDashboardRepository implements IPilgrimDashboardRepository {
         include: {
           flights: true,
           transportations: true,
+          hotels: true,
+          members: true,
         },
         orderBy: {
           createdAt: 'desc',
