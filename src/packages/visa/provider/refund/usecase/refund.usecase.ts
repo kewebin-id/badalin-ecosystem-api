@@ -1,5 +1,5 @@
 import { VisaSubmissionEntity } from '@/packages/visa/pilgrim/submission/domain/submission.entity';
-import { IUserContext } from '@/shared/utils/rest-api/types';
+import { IUsecaseResponse, IUserContext } from '@/shared/utils/rest-api/types';
 import { uploadFile } from '@/shared/utils/upload.util';
 import { Inject, Injectable } from '@nestjs/common';
 import { IRefundRepository } from '../ports/refund.repository.port';
