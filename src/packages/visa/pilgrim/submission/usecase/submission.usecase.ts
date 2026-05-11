@@ -14,74 +14,100 @@ import {
 import { IUploadUseCase } from '@/packages/upload/ports/i.usecase';
 import { dateUtil } from '@/shared/utils';
 
+import { sendSubmissionRegistrationEmail } from '@/shared/utils/mailer';
+
+const RIYADH_TIMEZONE = 'Asia/Riyadh';
+
 export function validateLogistics(data: ISubmissionRequest): ISubmissionError[] {
   const errors: ISubmissionError[] = [];
   const flights = data.flights || [];
+  const departureFlight = flights.find((f) => f.type === 'DEPARTURE');
+  const returnFlight = flights.find((f) => f.type === 'RETURN');
   
-  // Sort hotels by check-in date using standardized Jakarta time
   const hotels = [...(data.hotels || [])].sort((a, b) => 
-    dateUtil(a.checkIn).valueOf() - dateUtil(b.checkIn).valueOf()
+    dateUtil(a.checkIn).tz(RIYADH_TIMEZONE).valueOf() - dateUtil(b.checkIn).tz(RIYADH_TIMEZONE).valueOf()
   );
 
-  // 1. Departure Validation (Flight ETA === First Hotel Check-in)
-  const departureFlight = flights.find((f) => f.type === 'DEPARTURE');
   const firstHotel = hotels[0];
   
   if (departureFlight && firstHotel) {
-    const flightArrivalDate = dateUtil(departureFlight.eta).format('YYYY-MM-DD');
-    const checkInDate = dateUtil(firstHotel.checkIn).format('YYYY-MM-DD');
+    const flightArrivalDate = dateUtil(departureFlight.eta).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
+    const checkInDate = dateUtil(firstHotel.checkIn).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
     
     if (flightArrivalDate !== checkInDate) {
       errors.push({
         path: 'departureFlightDate',
-        message: `BR-LOG-001: Tanggal kedatangan pesawat (ETA) ${flightArrivalDate} harus sama dengan tanggal check-in hotel pertama ${checkInDate}`,
+        message: `BR-LOG-001: Tanggal kedatangan pesawat (ETA) ${flightArrivalDate} harus sama dengan tanggal check-in hotel pertama ${checkInDate} (Riyadh Time)`,
       });
     }
   }
 
-  // 2. Hotel Chain Validation (Hotel N Check-out === Hotel N+1 Check-in)
+  if (departureFlight) {
+    const landingDate = dateUtil(departureFlight.eta).tz(RIYADH_TIMEZONE).startOf('day');
+    hotels.forEach((hotel, index) => {
+      const checkInDate = dateUtil(hotel.checkIn).tz(RIYADH_TIMEZONE).startOf('day');
+      if (checkInDate.isBefore(landingDate)) {
+        errors.push({
+          path: `hotels.${index}.checkIn`,
+          message: `Tanggal Check-in hotel tidak boleh sebelum tanggal mendarat di Arab Saudi.`,
+        });
+      }
+    });
+  }
+
   hotels.forEach((hotel, index) => {
-    const checkIn = dateUtil(hotel.checkIn);
-    const checkOut = dateUtil(hotel.checkOut);
+    const checkIn = dateUtil(hotel.checkIn).tz(RIYADH_TIMEZONE);
+    const checkOut = dateUtil(hotel.checkOut).tz(RIYADH_TIMEZONE);
     const checkInStr = checkIn.format('YYYY-MM-DD');
     const checkOutStr = checkOut.format('YYYY-MM-DD');
 
-    // Basic validity: Check-in < Check-out
     if (!checkOut.isAfter(checkIn)) {
       errors.push({
         path: `hotels.${index}.checkOut`,
-        message: `BR-LOG-002: Tanggal check-out (${checkOutStr}) harus setelah tanggal check-in (${checkInStr}) untuk hotel di ${hotel.city}`,
+        message: `BR-LOG-002: Tanggal check-out (${checkOutStr}) harus setelah tanggal check-in (${checkInStr}) untuk hotel di ${hotel.city} (Riyadh Time)`,
       });
     }
 
-    // Continuity check (Zero Gap)
     if (index > 0) {
       const prevHotel = hotels[index - 1];
-      const prevCheckOutStr = dateUtil(prevHotel.checkOut).format('YYYY-MM-DD');
+      const prevCheckOutStr = dateUtil(prevHotel.checkOut).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
       
       if (prevCheckOutStr !== checkInStr) {
         errors.push({
           path: `hotels.${index}.checkIn`,
-          message: `BR-LOG-003: Zero Gap required. Tanggal check-in di ${hotel.city} (${checkInStr}) harus sama dengan tanggal check-out hotel sebelumnya di ${prevHotel.city} (${prevCheckOutStr})`,
+          message: `BR-LOG-003: Zero Gap required. Tanggal check-in di ${hotel.city} (${checkInStr}) harus sama dengan tanggal check-out hotel sebelumnya di ${prevHotel.city} (${prevCheckOutStr}) (Riyadh Time)`,
         });
       }
     }
   });
 
-  // 3. Return Validation (Last Hotel Check-out === Flight ETD)
-  const returnFlight = flights.find((f) => f.type === 'RETURN');
   const lastHotel = hotels[hotels.length - 1];
 
   if (returnFlight && lastHotel) {
-    const flightDepartureDate = dateUtil(returnFlight.etd).format('YYYY-MM-DD');
-    const checkOutDate = dateUtil(lastHotel.checkOut).format('YYYY-MM-DD');
+    const flightDepartureDate = dateUtil(returnFlight.etd).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
+    const checkOutDate = dateUtil(lastHotel.checkOut).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
 
     if (flightDepartureDate !== checkOutDate) {
       errors.push({
         path: 'returnFlightDate',
-        message: `BR-LOG-004: Tanggal check-out hotel terakhir ${checkOutDate} harus sama dengan tanggal keberangkatan pesawat (ETD) ${flightDepartureDate}`,
+        message: `BR-LOG-004: Tanggal check-out hotel terakhir ${checkOutDate} harus sama dengan tanggal keberangkatan pesawat (ETD) ${flightDepartureDate} (Riyadh Time)`,
       });
     }
+  }
+
+  if (departureFlight && returnFlight) {
+    const landingDate = dateUtil(departureFlight.eta).tz(RIYADH_TIMEZONE).startOf('day');
+    const takeoffDate = dateUtil(returnFlight.etd).tz(RIYADH_TIMEZONE).startOf('day');
+    
+    (data.transportations || []).forEach((transport, index) => {
+      const transportDate = dateUtil(transport.date).tz(RIYADH_TIMEZONE).startOf('day');
+      if (transportDate.isBefore(landingDate) || transportDate.isAfter(takeoffDate)) {
+        errors.push({
+          path: `transportations.${index}.date`,
+          message: `Tanggal transportasi harus berada dalam rentang kedatangan dan kepulangan.`,
+        });
+      }
+    });
   }
 
   return errors;
@@ -132,6 +158,13 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
     };
 
     const submission = await this.repository.create(submissionData, ctx);
+
+    if (ctx.email) {
+      sendSubmissionRegistrationEmail(ctx.email).catch((err) => {
+        console.error('Failed to send registration email:', err);
+      });
+    }
+
     return { id: submission.id };
   }
 
