@@ -17,52 +17,84 @@ export class RefundUseCase implements IRefundUseCase {
     page: number = 1,
     limit: number = 10,
     search?: string,
-  ): Promise<{ items: IRefundListItem[]; totalItems: number; totalPages: number; currentPage: number }> {
-    const submissions = await this.repository.findRefundableSubmissions(ctx);
-    let list: IRefundListItem[] = [];
+  ): Promise<
+    IUsecaseResponse<{
+      items: IRefundListItem[];
+      totalItems: number;
+      totalPages: number;
+      currentPage: number;
+    }>
+  > {
+    try {
+      const submissions = await this.repository.findRefundableSubmissions(ctx);
+      let list: IRefundListItem[] = [];
 
-    for (const sub of submissions) {
-      const totalMembers = (sub as any)._count?.members || sub.members?.length || 1;
-      const amountPerPerson = Number(sub.totalAmount) / totalMembers;
+      for (const sub of submissions) {
+        const totalMembers = (sub as any)._count?.members || sub.members?.length || 1;
+        const amountPerPerson = Number(sub.totalAmount) / totalMembers;
 
-      if (sub.members) {
-        for (const pilgrim of sub.members) {
-          list.push({
-            pilgrimId: pilgrim.id,
-            fullName: pilgrim.fullName,
-            passportNumber: pilgrim.passportNumber,
-            submissionId: sub.id,
-            refundAmount: amountPerPerson,
-            refundStatus: sub.refundStatus || 'PENDING',
-            deadline: sub.refundDeadline,
-          });
+        if (sub.members) {
+          for (const pilgrim of sub.members) {
+            list.push({
+              pilgrimId: pilgrim.id,
+              fullName: pilgrim.fullName,
+              passportNumber: pilgrim.passportNumber,
+              submissionId: sub.id,
+              refundAmount: amountPerPerson,
+              refundStatus: sub.refundStatus || 'PENDING',
+              deadline: sub.refundDeadline,
+            });
+          }
         }
       }
+
+      if (search) {
+        const s = search.toLowerCase();
+        list = list.filter(
+          (item) => item.fullName.toLowerCase().includes(s) || item.passportNumber.toLowerCase().includes(s),
+        );
+      }
+
+      const totalItems = list.length;
+      const totalPages = Math.ceil(totalItems / limit);
+      const items = list.slice((page - 1) * limit, page * limit);
+
+      return {
+        data: {
+          items,
+          totalItems,
+          totalPages,
+          currentPage: page,
+        },
+      };
+    } catch (error) {
+      return {
+        error: {
+          message: error.message || 'Failed to fetch refund list',
+          code: 500,
+        },
+      };
     }
-
-    if (search) {
-      const s = search.toLowerCase();
-      list = list.filter(
-        (item) => item.fullName.toLowerCase().includes(s) || item.passportNumber.toLowerCase().includes(s),
-      );
-    }
-
-    const totalItems = list.length;
-    const totalPages = Math.ceil(totalItems / limit);
-    const items = list.slice((page - 1) * limit, page * limit);
-
-    return {
-      items,
-      totalItems,
-      totalPages,
-      currentPage: page,
-    };
   }
 
-  async settleRefund(submissionId: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
-    const bucket = process.env.SUPABASE_BUCKET || 'jamaah-docs';
-    const proofUrl = await uploadFile(file, bucket, `refunds/${submissionId}/proof-${Date.now()}`);
+  async settleRefund(
+    submissionId: string,
+    file: string,
+    ctx: IUserContext,
+  ): Promise<IUsecaseResponse<VisaSubmissionEntity>> {
+    try {
+      const bucket = process.env.SUPABASE_BUCKET || 'jamaah-docs';
+      const proofUrl = await uploadFile(file, bucket, `refunds/${submissionId}/proof-${Date.now()}`);
 
-    return this.repository.settleRefund(submissionId, proofUrl, ctx);
+      const data = await this.repository.settleRefund(submissionId, proofUrl, ctx);
+      return { data };
+    } catch (error) {
+      return {
+        error: {
+          message: error.message || 'Failed to settle refund',
+          code: 500,
+        },
+      };
+    }
   }
 }

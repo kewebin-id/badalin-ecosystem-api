@@ -1,3 +1,4 @@
+import { IUsecaseResponse } from '@/shared/utils';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { VisaSubmissionEntity } from '@/packages/visa/pilgrim/submission/domain/submission.entity';
 
@@ -17,6 +18,13 @@ export interface IRefundUseCase {
     page?: number,
     limit?: number,
     search?: string,
-  ): Promise<{ items: IRefundListItem[]; totalItems: number; totalPages: number; currentPage: number }>;
-  settleRefund(submissionId: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  ): Promise<
+    IUsecaseResponse<{
+      items: IRefundListItem[];
+      totalItems: number;
+      totalPages: number;
+      currentPage: number;
+    }>
+  >;
+  settleRefund(submissionId: string, file: string, ctx: IUserContext): Promise<IUsecaseResponse<VisaSubmissionEntity>>;
 }
