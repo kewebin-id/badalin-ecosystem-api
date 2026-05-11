@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { IRefundUseCase } from '../ports/refund.usecase.port';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { UserContext } from '@/shared/decorators/user-context.decorator';
@@ -17,8 +17,18 @@ export class RefundController {
   ) {}
 
   @Get()
-  async getRefundList(@UserContext() ctx: IUserContext) {
-    return this.useCase.getRefundList(ctx);
+  async getRefundList(
+    @UserContext() ctx: IUserContext,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    const data = await this.useCase.getRefundList(ctx, page, limit, search);
+    return {
+      code: 200,
+      message: 'Success!',
+      data,
+    };
   }
 
   @Post(':id/settle')
