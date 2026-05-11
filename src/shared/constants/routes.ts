@@ -19,6 +19,7 @@ export enum EVisaRoutes {
   PROVIDER_DASHBOARD = `${EActorPrefix.PROVIDER}/dashboard`,
   PROVIDER_VERIFICATION = `${EActorPrefix.PROVIDER}/submissions`,
   PROVIDER_MANIFEST = `${EActorPrefix.PROVIDER}/submissions`,
+  PROVIDER_REFUND = `${EActorPrefix.PROVIDER}/refund`,
   
   // Pilgrim Features
   PILGRIM_AUTH = `${EActorPrefix.PILGRIM}/auth`,
