@@ -24,47 +24,62 @@ export function validateLogistics(data: ISubmissionRequest): ISubmissionError[] 
   const departureFlight = flights.find((f) => f.type === 'DEPARTURE');
   const returnFlight = flights.find((f) => f.type === 'RETURN');
   
+  // 1. Validation Priority: Flight data must be valid first
+  if (!departureFlight || !departureFlight.eta) {
+    if (!departureFlight) {
+      errors.push({ path: 'flights.departure', message: 'Data penerbangan keberangkatan tidak ditemukan.' });
+    } else {
+      errors.push({ path: 'flights.departure.eta', message: 'Tanggal mendarat (ETA) harus diisi.' });
+    }
+  }
+
+  if (!returnFlight || !returnFlight.etd) {
+    if (!returnFlight) {
+      errors.push({ path: 'flights.return', message: 'Data penerbangan kepulangan tidak ditemukan.' });
+    } else {
+      errors.push({ path: 'flights.return.etd', message: 'Tanggal takeoff (ETD) harus diisi.' });
+    }
+  }
+
+  if (!departureFlight || !returnFlight || !departureFlight.eta || !returnFlight.etd) {
+    return errors;
+  }
+
+  // Now we have valid flight boundaries
+  const landingDate = dateUtil(departureFlight.eta).tz(RIYADH_TIMEZONE).startOf('day');
+  const takeoffDate = dateUtil(returnFlight.etd).tz(RIYADH_TIMEZONE).startOf('day');
+  const landingStr = landingDate.format('DD/MM/YYYY');
+  const takeoffStr = takeoffDate.format('DD/MM/YYYY');
+
   const hotels = [...(data.hotels || [])].sort((a, b) => 
     dateUtil(a.checkIn).tz(RIYADH_TIMEZONE).valueOf() - dateUtil(b.checkIn).tz(RIYADH_TIMEZONE).valueOf()
   );
 
-  const firstHotel = hotels[0];
-  
-  if (departureFlight && firstHotel) {
-    const flightArrivalDate = dateUtil(departureFlight.eta).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
-    const checkInDate = dateUtil(firstHotel.checkIn).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
-    
-    if (flightArrivalDate !== checkInDate) {
-      errors.push({
-        path: 'departureFlightDate',
-        message: `BR-LOG-001: Tanggal kedatangan pesawat (ETA) ${flightArrivalDate} harus sama dengan tanggal check-in hotel pertama ${checkInDate} (Riyadh Time)`,
-      });
-    }
-  }
-
-  if (departureFlight) {
-    const landingDate = dateUtil(departureFlight.eta).tz(RIYADH_TIMEZONE).startOf('day');
-    hotels.forEach((hotel, index) => {
-      const checkInDate = dateUtil(hotel.checkIn).tz(RIYADH_TIMEZONE).startOf('day');
-      if (checkInDate.isBefore(landingDate)) {
-        errors.push({
-          path: `hotels.${index}.checkIn`,
-          message: `Tanggal Check-in hotel tidak boleh sebelum tanggal mendarat di Arab Saudi.`,
-        });
-      }
-    });
-  }
-
+  // 2. Hotel Check (check_in >= landing AND check_out <= takeoff)
   hotels.forEach((hotel, index) => {
-    const checkIn = dateUtil(hotel.checkIn).tz(RIYADH_TIMEZONE);
-    const checkOut = dateUtil(hotel.checkOut).tz(RIYADH_TIMEZONE);
+    const checkIn = dateUtil(hotel.checkIn).tz(RIYADH_TIMEZONE).startOf('day');
+    const checkOut = dateUtil(hotel.checkOut).tz(RIYADH_TIMEZONE).startOf('day');
     const checkInStr = checkIn.format('YYYY-MM-DD');
     const checkOutStr = checkOut.format('YYYY-MM-DD');
+
+    if (checkIn.isBefore(landingDate)) {
+      errors.push({
+        path: `hotels.${index}.checkIn`,
+        message: `Minimal tanggal check-in adalah ${landingStr} (Sesuai landing)`,
+      });
+    }
+
+    if (checkOut.isAfter(takeoffDate)) {
+      errors.push({
+        path: `hotels.${index}.checkOut`,
+        message: `Maksimal tanggal check-out adalah ${takeoffStr} (Sesuai takeoff)`,
+      });
+    }
 
     if (!checkOut.isAfter(checkIn)) {
       errors.push({
         path: `hotels.${index}.checkOut`,
-        message: `BR-LOG-002: Tanggal check-out (${checkOutStr}) harus setelah tanggal check-in (${checkInStr}) untuk hotel di ${hotel.city} (Riyadh Time)`,
+        message: `Tanggal check-out (${checkOutStr}) harus setelah tanggal check-in (${checkInStr})`,
       });
     }
 
@@ -75,40 +90,48 @@ export function validateLogistics(data: ISubmissionRequest): ISubmissionError[] 
       if (prevCheckOutStr !== checkInStr) {
         errors.push({
           path: `hotels.${index}.checkIn`,
-          message: `BR-LOG-003: Zero Gap required. Tanggal check-in di ${hotel.city} (${checkInStr}) harus sama dengan tanggal check-out hotel sebelumnya di ${prevHotel.city} (${prevCheckOutStr}) (Riyadh Time)`,
+          message: `Zero Gap: Tanggal check-in (${checkInStr}) harus sama dengan check-out hotel sebelumnya (${prevCheckOutStr})`,
         });
       }
     }
   });
 
-  const lastHotel = hotels[hotels.length - 1];
-
-  if (returnFlight && lastHotel) {
-    const flightDepartureDate = dateUtil(returnFlight.etd).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
-    const checkOutDate = dateUtil(lastHotel.checkOut).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
-
-    if (flightDepartureDate !== checkOutDate) {
+  // Specific check for first and last hotel alignment
+  if (hotels.length > 0) {
+    const firstHotel = hotels[0];
+    const lastHotel = hotels[hotels.length - 1];
+    
+    const flightArrivalDate = landingDate.format('YYYY-MM-DD');
+    const firstCheckInDate = dateUtil(firstHotel.checkIn).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
+    
+    if (flightArrivalDate !== firstCheckInDate) {
       errors.push({
-        path: 'returnFlightDate',
-        message: `BR-LOG-004: Tanggal check-out hotel terakhir ${checkOutDate} harus sama dengan tanggal keberangkatan pesawat (ETD) ${flightDepartureDate} (Riyadh Time)`,
+        path: 'hotels.0.checkIn',
+        message: `Check-in hotel pertama (${firstCheckInDate}) harus sama dengan landing (${flightArrivalDate})`,
+      });
+    }
+
+    const flightDepartureDate = takeoffDate.format('YYYY-MM-DD');
+    const lastCheckOutDate = dateUtil(lastHotel.checkOut).tz(RIYADH_TIMEZONE).format('YYYY-MM-DD');
+
+    if (flightDepartureDate !== lastCheckOutDate) {
+      errors.push({
+        path: `hotels.${hotels.length - 1}.checkOut`,
+        message: `Check-out hotel terakhir (${lastCheckOutDate}) harus sama dengan takeoff (${flightDepartureDate})`,
       });
     }
   }
 
-  if (departureFlight && returnFlight) {
-    const landingDate = dateUtil(departureFlight.eta).tz(RIYADH_TIMEZONE).startOf('day');
-    const takeoffDate = dateUtil(returnFlight.etd).tz(RIYADH_TIMEZONE).startOf('day');
-    
-    (data.transportations || []).forEach((transport, index) => {
-      const transportDate = dateUtil(transport.date).tz(RIYADH_TIMEZONE).startOf('day');
-      if (transportDate.isBefore(landingDate) || transportDate.isAfter(takeoffDate)) {
-        errors.push({
-          path: `transportations.${index}.date`,
-          message: `Tanggal transportasi harus berada dalam rentang kedatangan dan kepulangan.`,
-        });
-      }
-    });
-  }
+  // 3. Transport Check (transport_date between landing and takeoff)
+  (data.transportations || []).forEach((transport, index) => {
+    const transportDate = dateUtil(transport.date).tz(RIYADH_TIMEZONE).startOf('day');
+    if (transportDate.isBefore(landingDate) || transportDate.isAfter(takeoffDate)) {
+      errors.push({
+        path: `transportations.${index}.date`,
+        message: `Tanggal transportasi harus berada di antara ${landingStr} dan ${takeoffStr}`,
+      });
+    }
+  });
 
   return errors;
 }
