@@ -91,4 +91,5 @@ export interface IVisaSubmissionRepository {
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity>;
   submitVisas(id: string, visaUrls: Record<string, string>, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  issueSubmission(id: string, groupVisaUrl: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }

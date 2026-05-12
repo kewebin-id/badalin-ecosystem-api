@@ -31,4 +31,6 @@ export interface IVerificationUseCase {
     visaUrls: Record<string, string>,
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity>;
+  
+  issue(id: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }

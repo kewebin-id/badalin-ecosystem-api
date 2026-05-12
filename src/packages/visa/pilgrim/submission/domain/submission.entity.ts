@@ -22,6 +22,7 @@ export class HotelManifestEntity {
   checkOut: Date;
   city: HotelCity;
   roomType: RoomType;
+  totalDays?: number;
   imageUrls: string[];
 }
 
@@ -74,6 +75,7 @@ export interface PaymentProofSnapshot {
 export interface ISubmissionResultSnapshot {
   memberStatuses?: Record<string, { valid: boolean; reason?: string }>;
   visaUrls?: Record<string, string>;
+  groupVisaUrl?: string;
   isIssued?: boolean;
   issuedAt?: Date;
   paymentProof?: PaymentProofSnapshot;

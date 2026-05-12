@@ -1,4 +1,5 @@
 import { VisaSubmissionEntity } from '@/packages/visa/pilgrim/submission/domain/submission.entity';
+import { validateLogistics } from '@/packages/visa/pilgrim/submission/usecase/submission.usecase';
 import { IVisaSubmissionRepository } from '@/packages/visa/pilgrim/submission/ports/submission.repository.port';
 import { IUserContext } from '@/shared/utils/rest-api/types';
 import { uploadFile } from '@/shared/utils/upload.util';
@@ -66,10 +67,40 @@ export class VerificationUseCase implements IVerificationUseCase {
   }
 
   async review(id: string, dto: ReviewSubmissionDto, ctx: IUserContext): Promise<VisaSubmissionEntity> {
-    await this.validateOwnership(id, ctx);
+    const existing = await this.validateOwnership(id, ctx);
 
     if (dto.status === VerifyStatus.REJECTED && !dto.rejectionReason) {
       throw new HttpException('Rejection reason is mandatory when status is REJECTED', HttpStatus.BAD_REQUEST);
+    }
+
+    if (dto.status === VerifyStatus.VERIFIED) {
+      // 1. Payment Check
+      if (existing.paymentStatus !== PaymentStatus.COMPLETED) {
+        throw new HttpException('Payment must be COMPLETED before approval', HttpStatus.BAD_REQUEST);
+      }
+
+      // 2. Member Check (All must be eligible)
+      const memberReviews = dto.members || [];
+      const existingMembers = existing.members || [];
+      
+      const allMembersApproved = existingMembers.every(m => {
+        const review = memberReviews.find(r => r.id === m.id);
+        if (review) return review.isEligible;
+        return m.isEligible;
+      });
+
+      if (!allMembersApproved) {
+        throw new HttpException('All members must be approved (eligible) before approving submission', HttpStatus.BAD_REQUEST);
+      }
+
+      // 3. Logistics Check (Zero Gap Sync)
+      const logisticsErrors = validateLogistics(existing as any);
+      if (logisticsErrors.length > 0) {
+        throw new HttpException({
+          message: 'Logistics validation failed (Zero Gap Sync mismatch)',
+          errors: logisticsErrors,
+        }, HttpStatus.BAD_REQUEST);
+      }
     }
 
     return this.repository.review(
@@ -83,7 +114,20 @@ export class VerificationUseCase implements IVerificationUseCase {
   }
 
   async findOne(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
-    return this.validateOwnership(id, ctx);
+    const submission = await this.validateOwnership(id, ctx);
+    
+    // Enrich with totalDays and hotelName
+    if (submission.hotels) {
+      submission.hotels = submission.hotels.map(h => ({
+        ...h,
+        hotelName: h.name, // Ensure hotelName is present as requested
+        totalDays: Math.max(1, Math.ceil(
+          (new Date(h.checkOut).getTime() - new Date(h.checkIn).getTime()) / (1000 * 60 * 60 * 24)
+        ))
+      }));
+    }
+
+    return submission;
   }
 
   async uploadVisas(
@@ -127,5 +171,28 @@ export class VerificationUseCase implements IVerificationUseCase {
     }
 
     return this.repository.submitVisas(id, visaUrls, ctx);
+  }
+
+  async issue(id: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+    const submission = await this.validateOwnership(id, ctx);
+
+    if (submission.paymentStatus !== PaymentStatus.COMPLETED) {
+      throw new HttpException('Cannot issue: Payment has not been completed', HttpStatus.BAD_REQUEST);
+    }
+
+    if (submission.status !== VerifyStatus.VERIFIED) {
+      throw new HttpException('Cannot issue: Submission must be APPROVED first', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      const bucket = process.env.SUPABASE_BUCKET || 'jamaah-docs';
+      const url = await uploadFile(file, bucket, `evisa-${id}`);
+      return this.repository.issueSubmission(id, url, ctx);
+    } catch (uploadError: any) {
+      throw new HttpException(
+        `Failed to upload E-Visa PDF: ${uploadError?.message || 'Unknown error'}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }
