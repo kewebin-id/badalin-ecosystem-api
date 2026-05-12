@@ -93,4 +93,19 @@ export class VerificationController {
       data: result,
     };
   }
+
+  @Patch('submissions/:id/issue')
+  @UseGuards(AgencyStatusGuard)
+  async issue(
+    @Param('id') id: string,
+    @Body('file') file: string,
+    @UserContext() ctx: IUserContext,
+  ) {
+    const result = await this.useCase.issue(id, file, ctx);
+    return {
+      code: HttpStatus.OK,
+      message: 'Submission status updated to ISSUED and E-Visa uploaded',
+      data: result,
+    };
+  }
 }

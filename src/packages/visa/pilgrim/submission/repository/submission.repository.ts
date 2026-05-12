@@ -409,4 +409,38 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
     if (!result) throw new Error('Submission not found after update');
     return result;
   }
+
+  async issueSubmission(
+    id: string,
+    groupVisaUrl: string,
+    ctx: IUserContext,
+  ): Promise<VisaSubmissionEntity> {
+    const submission = await this.db.visaSubmission.findUnique({
+      where: { id },
+    });
+
+    if (!submission) throw new Error('Submission not found');
+
+    const currentSnapshot = (submission.resultSnapshot as unknown as ISubmissionResultSnapshot) || {};
+    const updatedSnapshot: ISubmissionResultSnapshot = {
+      ...currentSnapshot,
+      groupVisaUrl,
+      isIssued: true,
+      issuedAt: new Date(),
+    };
+
+    await this.db.visaSubmission.update({
+      where: { id },
+      data: {
+        reviewStatus: VerifyStatus.ISSUED,
+        status: VerifyStatus.ISSUED,
+        resultSnapshot: updatedSnapshot as unknown as Prisma.InputJsonValue,
+        updatedBy: ctx.id,
+      },
+    });
+
+    const result = await this.findById(id);
+    if (!result) throw new Error('Submission not found after issue update');
+    return result;
+  }
 }
