@@ -47,6 +47,10 @@ export class CreatePilgrimDto {
   @IsNotEmpty()
   passportUrl: string;
 
+  @IsString()
+  @IsOptional()
+  employmentCertificateUrl?: string;
+
   @IsNumber()
   @IsOptional()
   ocrConfidence?: number;
@@ -98,6 +102,10 @@ export class UpdatePilgrimDto {
   @IsString()
   @IsOptional()
   passportUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  employmentCertificateUrl?: string;
 
   @IsNumber()
   @IsOptional()
