@@ -195,24 +195,64 @@ export class VisaSubmissionRepository implements IVisaSubmissionRepository {
 
   async update(
     id: string,
-    data: Partial<VisaSubmissionEntity>,
+    data: any,
     pilgrimIds: string[],
     ctx: IUserContext,
   ): Promise<VisaSubmissionEntity> {
     return this.db.$transaction(async (tx) => {
-      const { members, flights, hotels, transportations, agency, ...scalarData } = data;
-      const updateData: Prisma.VisaSubmissionUpdateInput = {
-        ...(scalarData as Prisma.VisaSubmissionUpdateInput),
-      };
+      const { members, flights, hotels, transportations, agency, pilgrimIds: _, ocrConfidence: __, ...scalarData } = data;
 
-      if (pilgrimIds && pilgrimIds.length > 0) {
-        updateData.members = { set: pilgrimIds.map((pid: string) => ({ id: pid })) };
-      }
+      await tx.flightManifest.deleteMany({ where: { submissionId: id } });
+      await tx.hotelManifest.deleteMany({ where: { submissionId: id } });
+      await tx.transportationManifest.deleteMany({ where: { submissionId: id } });
 
       const submission = await tx.visaSubmission.update({
         where: { id },
-        data: updateData,
-        include: { members: true },
+        data: {
+          ...scalarData,
+          members: { set: pilgrimIds.map((pid: string) => ({ id: pid })) },
+          flights: flights
+            ? {
+                create: flights.map((f: any) => ({
+                  ...f,
+                  type: f.type as FlightType,
+                  flightDate: new Date(f.flightDate),
+                  eta: new Date(f.eta),
+                  etd: new Date(f.etd),
+                  createdBy: ctx.id,
+                })),
+              }
+            : undefined,
+          hotels: hotels
+            ? {
+                create: hotels.map((h: any) => ({
+                  ...h,
+                  city: h.city as HotelCity,
+                  roomType: h.roomType as RoomType,
+                  checkIn: new Date(h.checkIn),
+                  checkOut: new Date(h.checkOut),
+                  createdBy: ctx.id,
+                })),
+              }
+            : undefined,
+          transportations: transportations
+            ? {
+                create: transportations.map((t: any) => ({
+                  ...t,
+                  type: t.type as TransportType,
+                  date: new Date(t.date),
+                  createdBy: ctx.id,
+                })),
+              }
+            : undefined,
+          updatedBy: ctx.id,
+        },
+        include: {
+          members: true,
+          flights: true,
+          hotels: true,
+          transportations: true,
+        },
       });
 
       return submission as unknown as VisaSubmissionEntity;

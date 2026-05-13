@@ -190,6 +190,38 @@ export class PilgrimSubmissionUseCase implements IPilgrimSubmissionUseCase {
 
     return { id: submission.id };
   }
+  
+  async update(id: string, data: ISubmissionRequest, ctx: IUserContext): Promise<VisaSubmissionEntity> {
+    const agencySlug = ctx.agencySlug || data.agencySlug;
+    if (!agencySlug) {
+      throw new HttpException('Agency slug is required', HttpStatus.BAD_REQUEST);
+    }
+
+    const agency = await this.agencyRepository.findBySlug(agencySlug);
+    if (!agency) {
+      throw new HttpException('Agency not found', HttpStatus.NOT_FOUND);
+    }
+
+    const pilgrimIds = data.pilgrimIds || [];
+    const totalAmount = pilgrimIds.length * Number(agency.visaPrice);
+
+    const submissionData = {
+      ...data,
+      agencySlug,
+      totalAmount,
+      flights: data.flights.map((f) => ({
+        ...f,
+        from: f.from ?? null,
+        to: f.to ?? null,
+      })),
+      transportations: data.transportations.map((t) => ({
+        ...t,
+        totalH: t.totalH ?? null,
+      })),
+    } as any;
+
+    return this.repository.update(id, submissionData, pilgrimIds, ctx);
+  }
 
   async preview(data: ISubmissionRequest, ctx: IUserContext): Promise<IPreviewResponse> {
     const agencySlug = ctx.agencySlug || data.agencySlug;

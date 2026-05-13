@@ -8,6 +8,7 @@ import {
   Inject,
   Param,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
@@ -101,6 +102,23 @@ export class PilgrimSubmissionController {
       return {
         code: HttpStatus.OK,
         message: 'Payment proof uploaded successfully',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Internal server error',
+        error instanceof HttpException ? error.getStatus() : 500,
+      );
+    }
+  }
+
+  @Put('submissions/:id')
+  async update(@UserContext() ctx: IUserContext, @Param('id') id: string, @Body() data: ISubmissionRequest) {
+    try {
+      const result = await this.usecase.update(id, data, ctx);
+      return {
+        code: HttpStatus.OK,
+        message: 'Submission updated successfully',
         data: result,
       };
     } catch (error) {
