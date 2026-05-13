@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 import { globalLogger as Logger } from './logger';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -8,7 +9,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   Logger.warn('Supabase credentials missing. Supabase client will fail.', 'SupabaseUtil');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: {
+    transport: ws,
+  },
+});
 
 export const uploadFile = async (
   fileOrBase64: string,
