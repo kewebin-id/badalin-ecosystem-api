@@ -9,6 +9,7 @@
     "build": "npm run prisma:sync && nest build",
     "start": "nest start",
     "dev": "npm run prisma:generate && nest start --watch -r tsconfig-paths/register",
+    "dev:force": "lsof -ti tcp:3004 | xargs kill -9 && npm run dev",
     "debug": "nest start --debug --watch -r tsconfig-paths/register",
     "format": "prettier --write \"src/**/*.ts\"",
     "format-all": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

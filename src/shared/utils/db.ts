@@ -51,7 +51,12 @@ export const clientDb =
   global.prisma ||
   new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'info', 'warn', 'error']
+        : process.env.NODE_ENV === 'production'
+          ? ['warn', 'error']
+          : ['error'],
     transactionOptions: {
       timeout: transactionTimeout,
     },

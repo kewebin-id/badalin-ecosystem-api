@@ -64,5 +64,6 @@ export interface IPilgrimSubmissionUseCase {
   }>;
 
   getDetail(id: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
+  update(id: string, data: ISubmissionRequest, ctx: IUserContext): Promise<VisaSubmissionEntity>;
   uploadProof(id: string, file: string, ctx: IUserContext): Promise<VisaSubmissionEntity>;
 }
