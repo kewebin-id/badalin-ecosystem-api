@@ -11,88 +11,64 @@ import { json, urlencoded } from 'express';
 import { AppModule } from './modules/app.module';
 import { AllExceptionsFilter, dateUtil } from './shared/utils';
 
-// Ensure global timezone is initialized
 dateUtil();
 
-const bootstrap = async () => {
-  const mode = process.env.MODE;
+export const bootstrap = async () => {
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
 
-  console.log(`🔎 Badalin Ecosystem running in MODE = ${mode?.toUpperCase()}`);
+  app.get(ConfigService);
 
-  switch (mode) {
-    case 'API': {
-      console.log('🚀 Creating Badalin Ecosystem application...');
-      const app = await NestFactory.create(AppModule, {
-        bufferLogs: true,
-      });
-      console.log('✅ Badalin Ecosystem application created');
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb', extended: true }));
+  app.use(cookieParser());
 
-      app.get(ConfigService);
-      app.enableCors();
+  const port = process.env.PORT || 3000;
+  const allowedOrigins = process.env.BASE_URL_WEB?.split(',') || ['http://localhost:3000'];
 
-      app.use(json({ limit: '50mb' }));
-      app.use(urlencoded({ limit: '50mb', extended: true }));
-      app.use(cookieParser());
+  app.enableCors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS Hardening Policy'));
+      }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
-      const port = process.env.PORT || 3000;
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
-      const allowedOrigins = process.env.BASE_URL_WEB?.split(',') || ['http://localhost:3000'];
+  app.useGlobalFilters(new AllExceptionsFilter());
 
-      app.enableCors({
-        origin: (origin, callback) => {
-          if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-          } else {
-            callback(new Error('Not allowed by CORS Hardening Policy'));
-          }
-        },
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-        credentials: true,
-      });
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.get('/', (req, res) => {
+    res.status(200).json({
+      code: 200,
+      message: 'Welcome to Badalin Ecosystem API',
+    });
+  });
 
-      app.useGlobalPipes(
-        new ValidationPipe({
-          whitelist: true,
-          forbidNonWhitelisted: true,
-          transform: true,
-          transformOptions: {
-            enableImplicitConversion: true,
-          },
-        }),
-      );
+  await app.init();
 
-      app.useGlobalFilters(new AllExceptionsFilter());
-
-      const httpAdapter = app.getHttpAdapter();
-      httpAdapter.get('/', (_, res) => {
-        res.status(200).json({
-          code: 200,
-          message: 'Welcome to Badalin Ecosystem API',
-        });
-      });
-
-      console.log(`🚀 Starting server on port ${port}...`);
-      await app.listen(port);
-      console.log(`🌐 API server running on port: ${port}`);
-      break;
-    }
-
-    case 'WORKER': {
-      console.log('📩 Worker started — listening to BullMQ queues...');
-      break;
-    }
-
-    case 'SCHEDULER': {
-      const port = process.env.PORT || 3000;
-
-      console.log(`🗓️ Scheduler started on port ${port} — running cron jobs...`);
-      break;
-    }
-
-    default:
-      console.error(`❌ Invalid MODE "${mode}". Use api | worker | scheduler`);
-      throw new Error(`❌ Invalid MODE "${mode}". Use api | worker | scheduler`);
+  if (process.env.NODE_ENV !== 'production') {
+    await app.listen(port);
   }
+
+  return httpAdapter.getInstance();
 };
 
-bootstrap();
+if (process.env.NODE_ENV !== 'production') {
+  bootstrap();
+}
