@@ -36,7 +36,7 @@ const bootstrap = async () => {
 
       const port = process.env.PORT || 3000;
 
-      const allowedOrigins = process.env.BASE_URL_WEB?.split(',') || ['http://localhost:3000'];
+      const allowedOrigins = process.env.FRONTEND_URL?.split(',') || ['http://localhost:3000'];
 
       app.enableCors({
         origin: (origin, callback) => {
@@ -72,7 +72,7 @@ const bootstrap = async () => {
       });
 
       console.log(`🚀 Starting server on port ${port}...`);
-      await app.listen(port);
+      await app.listen(port, '0.0.0.0');
       console.log(`🌐 API server running on port: ${port}`);
       break;
     }
